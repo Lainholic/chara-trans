@@ -1379,6 +1379,7 @@ ${chunkText}`;
         }, 1000);
 
         let res;
+        let data;
         try {
             res = await fetch(url, {
                 method: 'POST',
@@ -1396,6 +1397,29 @@ ${chunkText}`;
                     temperature: 0.2
                 })
             });
+
+            if ((res.status === 429 || res.status === 502 || res.status === 503) && retryCount < 2) {
+                clearInterval(timer);
+                clearTimeout(timeoutId);
+                if (onTick) onTick('⏳ 서버 과부하 감지: 3초 후 자동 재시도 중...');
+                await sleep(3000);
+                return await requestChunkTranslation(chunkText, isProse, retryCount + 1, onTick);
+            }
+
+            if (!res.ok) {
+                clearInterval(timer);
+                clearTimeout(timeoutId);
+                const errData = await res.json().catch(() => ({}));
+                let msg = errData.error?.message || `HTTP ${res.status}`;
+                if (msg.includes('Provider returned error')) {
+                    const prov = errData.error?.metadata?.provider_name;
+                    const raw = errData.error?.metadata?.raw;
+                    msg = `제공사(${prov || 'AI'}) 서버 일시 과부하입니다. 상단 드롭다운에서 다른 모델(Gemini, DeepSeek 등)을 선택하시거나 [⚠️ 실패 항목만 재번역]을 눌러주세요.${raw ? ' (' + raw + ')' : ''}`;
+                }
+                throw new Error(msg);
+            }
+
+            data = await res.json();
             clearInterval(timer);
             clearTimeout(timeoutId);
         } catch (fetchErr) {
@@ -1407,25 +1431,7 @@ ${chunkText}`;
             throw fetchErr;
         }
 
-        if ((res.status === 429 || res.status === 502 || res.status === 503) && retryCount < 2) {
-            if (onTick) onTick('⏳ 서버 과부하 감지: 3초 후 자동 재시도 중...');
-            await sleep(3000);
-            return await requestChunkTranslation(chunkText, isProse, retryCount + 1, onTick);
-        }
-
-        if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            let msg = errData.error?.message || `HTTP ${res.status}`;
-            if (msg.includes('Provider returned error')) {
-                const prov = errData.error?.metadata?.provider_name;
-                const raw = errData.error?.metadata?.raw;
-                msg = `제공사(${prov || 'AI'}) 서버 일시 과부하입니다. 상단 드롭다운에서 다른 모델(Gemini, DeepSeek 등)을 선택하시거나 [⚠️ 실패 항목만 재번역]을 눌러주세요.${raw ? ' (' + raw + ')' : ''}`;
-            }
-            throw new Error(msg);
-        }
-
-        const data = await res.json();
-        const content = data.choices?.[0]?.message?.content;
+        const content = data?.choices?.[0]?.message?.content;
         if (!content) throw new Error('응답 텍스트가 비어있습니다.');
         return content.trim();
     }
