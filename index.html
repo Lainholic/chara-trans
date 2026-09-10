@@ -625,17 +625,17 @@
         <!-- Quick Preset Buttons -->
         <div class="preset-row">
             <span class="preset-label" id="lblQuickPresets">⚡ 빠른 엔드포인트 선택:</span>
-            <button type="button" class="preset-btn active" onclick="applyPreset('openrouter')">🌐 OpenRouter (추천 / 필터 미부과)</button>
-            <button type="button" class="preset-btn" onclick="applyPreset('deepseek')">⚡ DeepSeek 공식</button>
-            <button type="button" class="preset-btn" onclick="applyPreset('gemini')">🤖 Google Gemini (OpenAI 호환)</button>
-            <button type="button" class="preset-btn" onclick="applyPreset('ollama')">💻 로컬 Ollama (무료/오프라인)</button>
+            <button type="button" class="preset-btn active" id="presetOpenRouterBtn" onclick="applyPreset('openrouter')">🌐 OpenRouter (추천 / 필터 미부과)</button>
+            <button type="button" class="preset-btn" id="presetDeepSeekBtn" onclick="applyPreset('deepseek')">⚡ DeepSeek 공식</button>
+            <button type="button" class="preset-btn" id="presetGeminiBtn" onclick="applyPreset('gemini')">🤖 Google Gemini (초고속 병렬 ⚡)</button>
+            <button type="button" class="preset-btn" id="presetOllamaBtn" onclick="applyPreset('ollama')">💻 로컬 Ollama (무료/오프라인)</button>
         </div>
 
         <div class="api-inputs-grid">
             <!-- 1. Endpoint -->
             <div class="input-group">
                 <span class="input-label" id="lblEndpoint">🌐 엔드포인트 (Base URL)</span>
-                <input type="text" id="apiEndpoint" value="https://openrouter.ai/api/v1" placeholder="https://openrouter.ai/api/v1">
+                <input type="text" id="apiEndpoint" value="https://openrouter.ai/api/v1" placeholder="https://openrouter.ai/api/v1" oninput="updateSpeedModeIndicator()" onchange="updateSpeedModeIndicator()">
             </div>
 
             <!-- 2. API Key -->
@@ -655,7 +655,7 @@
             <div class="input-group">
                 <span class="input-label" id="lblModel">🤖 사용할 모델 (실시간 동기화)</span>
                 <div class="model-select-wrapper">
-                    <select id="modelSelect" style="font-weight:600;">
+                    <select id="modelSelect" style="font-weight:600;" onchange="updateSpeedModeIndicator()">
                         <option value="" disabled selected id="modelPlaceholder">👉 [🔄 모델 동기화]를 눌러 실시간 모델 목록을 불러오세요</option>
                     </select>
                     <button type="button" class="btn-fetch" id="btnSyncModels" onclick="fetchLiveModels()" title="Sync models from endpoint">
@@ -714,12 +714,15 @@
                 <label><input type="checkbox" id="chkInjectPrompt" checked onchange="updateDiffInspector()"> <span id="optInjectPrompt">선택 언어 출력 지침 주입</span></label>
                 <label title="로어북(키워드+본문) 번역본을 카드에 반영하여 저장"><input type="checkbox" id="saveLorebookKo" checked onchange="updateDiffInspector()"> <span id="optLorebookKo">로어북(키워드+본문) 번역본 저장</span></label>
             </div>
-            <div class="btn-group">
-                <button type="button" class="btn-diff-inspect" id="btnInspectDiff" onclick="toggleChunkDiffInspector()" title="원본과 번역본의 PNG 메타데이터 청크 구조를 1바이트 단위로 대조 검증합니다">🔍 무손실 청크 검증</button>
-                <button type="button" class="btn-retry-failed" id="btnRetryFailed" onclick="retryFailedOnly()">⚠️ 실패 항목만 재번역</button>
-                <button type="button" id="btnTranslateAll" onclick="translateAllSequential()">🔄 전체 번역 시작</button>
-                <button type="button" class="download-btn" id="btnSavePng" onclick="downloadPNG()">💾 PNG 카드 저장</button>
-                <button type="button" class="download-btn" id="btnSaveJson" onclick="downloadJSON()">📄 JSON 저장</button>
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:10px;">
+                <div id="speedModeBadge" style="font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;"></div>
+                <div class="btn-group">
+                    <button type="button" class="btn-diff-inspect" id="btnInspectDiff" onclick="toggleChunkDiffInspector()" title="원본과 번역본의 PNG 메타데이터 청크 구조를 1바이트 단위로 대조 검증합니다">🔍 무손실 청크 검증</button>
+                    <button type="button" class="btn-retry-failed" id="btnRetryFailed" onclick="retryFailedOnly()">⚠️ 실패 항목만 재번역</button>
+                    <button type="button" id="btnTranslateAll" onclick="translateAllSequential()">🔄 전체 번역 시작</button>
+                    <button type="button" class="download-btn" id="btnSavePng" onclick="downloadPNG()">💾 PNG 카드 저장</button>
+                    <button type="button" class="download-btn" id="btnSaveJson" onclick="downloadJSON()">📄 JSON 저장</button>
+                </div>
             </div>
         </div>
 
@@ -947,7 +950,7 @@
             quick_presets: "⚡ 빠른 엔드포인트 선택:",
             preset_openrouter: "🌐 OpenRouter (추천 / 필터 미부과)",
             preset_deepseek: "⚡ DeepSeek 공식",
-            preset_gemini: "🤖 Google Gemini (OpenAI 호환)",
+            preset_gemini: "🤖 Google Gemini (초고속 병렬 ⚡)",
             preset_ollama: "💻 로컬 Ollama (오프라인/무료)",
             lbl_endpoint: "🌐 엔드포인트 (Base URL)",
             lbl_apikey: "🔑 API Key",
@@ -987,7 +990,7 @@
             quick_presets: "⚡ Quick Presets:",
             preset_openrouter: "🌐 OpenRouter (Recommended / Direct)",
             preset_deepseek: "⚡ DeepSeek Official",
-            preset_gemini: "🤖 Google Gemini (OpenAI Compatible)",
+            preset_gemini: "🤖 Google Gemini (Ultra-fast Parallel ⚡)",
             preset_ollama: "💻 Local Ollama (Free/Offline)",
             lbl_endpoint: "🌐 Endpoint (Base URL)",
             lbl_apikey: "🔑 API Key",
@@ -1027,7 +1030,7 @@
             quick_presets: "⚡ プリセット選択:",
             preset_openrouter: "🌐 OpenRouter (推奨 / ダイレクト)",
             preset_deepseek: "⚡ DeepSeek 公式",
-            preset_gemini: "🤖 Google Gemini (OpenAI互換)",
+            preset_gemini: "🤖 Google Gemini (超高速並列 ⚡)",
             preset_ollama: "💻 ローカル Ollama (無料/オフライン)",
             lbl_endpoint: "🌐 エンドポイント (Base URL)",
             lbl_apikey: "🔑 API Key",
@@ -1105,6 +1108,10 @@
         safeSetText('appSubtitleBadge', t.subtitle_badge);
         safeSetText('appSecurityBadge', t.security_badge);
         safeSetText('lblQuickPresets', t.quick_presets);
+        safeSetText('presetOpenRouterBtn', t.preset_openrouter);
+        safeSetText('presetDeepSeekBtn', t.preset_deepseek);
+        safeSetText('presetGeminiBtn', t.preset_gemini);
+        safeSetText('presetOllamaBtn', t.preset_ollama);
         safeSetText('lblEndpoint', t.lbl_endpoint);
         safeSetText('lblApiKey', t.lbl_apikey);
         safeSetText('lblModel', t.lbl_model);
@@ -1141,6 +1148,7 @@
                 btn.innerText = t.btn_retry_item;
             }
         });
+        updateSpeedModeIndicator();
     }
 
     function safeSetText(id, txt) {
@@ -1158,22 +1166,24 @@
 
     const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
-    // Preset configurations
+    // ==========================================
+    // API Endpoints & Presets
+    // ==========================================
     const PRESETS = {
         openrouter: {
             endpoint: 'https://openrouter.ai/api/v1',
-            placeholder: 'sk-or-v1-... (OpenRouter API Key)',
+            placeholder: 'sk-or-v1-... 입력',
             defaultModel: 'deepseek/deepseek-chat'
         },
         deepseek: {
             endpoint: 'https://api.deepseek.com/v1',
-            placeholder: 'sk-... (DeepSeek API Key)',
+            placeholder: 'sk-... 입력',
             defaultModel: 'deepseek-chat'
         },
         gemini: {
             endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai',
             placeholder: 'AIzaSy... (Google AI Studio Key)',
-            defaultModel: 'gemini-2.0-flash'
+            defaultModel: 'gemini-3.8-flash'
         },
         ollama: {
             endpoint: 'http://localhost:11434/v1',
@@ -1181,6 +1191,75 @@
             defaultModel: 'qwen2.5:latest'
         }
     };
+
+    const GEMINI_MODELS = [
+        { id: 'gemini-3.8-flash', name: 'gemini-3.8-flash (최신 시즌 초고속 추천 ⚡)' },
+        { id: 'gemini-3.5-flash', name: 'gemini-3.5-flash' },
+        { id: 'gemini-3.0-flash', name: 'gemini-3.0-flash' },
+        { id: 'gemini-2.5-flash', name: 'gemini-2.5-flash' },
+        { id: 'gemini-3.8-pro', name: 'gemini-3.8-pro (고지능 심층 번역)' },
+        { id: 'gemini-2.0-flash', name: 'gemini-2.0-flash (구버전 레거시)' }
+    ];
+
+    function isGeminiActive() {
+        const endpoint = (document.getElementById('apiEndpoint')?.value || '').toLowerCase();
+        const model = (document.getElementById('modelSelect')?.value || '').toLowerCase();
+        return endpoint.includes('generativelanguage.googleapis.com') || model.includes('gemini');
+    }
+
+    function updateSpeedModeIndicator() {
+        const badge = document.getElementById('speedModeBadge');
+        if (!badge) return;
+        const isGemini = isGeminiActive();
+        if (isGemini) {
+            badge.style.background = 'rgba(56, 189, 248, 0.15)';
+            badge.style.border = '1px solid rgba(56, 189, 248, 0.4)';
+            badge.style.color = '#38bdf8';
+            if (currentUiLang === 'ja') {
+                badge.innerHTML = '⚡ <b>超高速並列翻訳モード</b> (Google Gemini検出 / 同時3件処理)';
+            } else if (currentUiLang === 'en') {
+                badge.innerHTML = '⚡ <b>Ultra-fast Parallel Mode</b> (Google Gemini detected / Concurrency 3)';
+            } else {
+                badge.innerHTML = '⚡ <b>초고속 병렬 번역 모드</b> (Google Gemini 감지 / 동시 3개 처리)';
+            }
+        } else {
+            badge.style.background = 'rgba(148, 163, 184, 0.1)';
+            badge.style.border = '1px solid rgba(148, 163, 184, 0.25)';
+            badge.style.color = '#94a3b8';
+            if (currentUiLang === 'ja') {
+                badge.innerHTML = '🛡️ <b>安全順次翻訳モード</b> (OpenRouter/標準 429レート制限防止)';
+            } else if (currentUiLang === 'en') {
+                badge.innerHTML = '🛡️ <b>Safe Sequential Mode</b> (OpenRouter/Default 429 rate limit prevention)';
+            } else {
+                badge.innerHTML = '🛡️ <b>안전 순차 번역 모드</b> (OpenRouter/일반 429 방지)';
+            }
+        }
+    }
+
+    async function runTasksWithConcurrency(tasks, concurrency = 1) {
+        if (!tasks || tasks.length === 0) return [];
+        const results = new Array(tasks.length);
+        let nextIdx = 0;
+
+        async function worker() {
+            while (nextIdx < tasks.length) {
+                const idx = nextIdx++;
+                try {
+                    results[idx] = await tasks[idx]();
+                } catch (err) {
+                    results[idx] = false;
+                }
+            }
+        }
+
+        const workerCount = Math.min(concurrency, tasks.length);
+        const workers = [];
+        for (let w = 0; w < workerCount; w++) {
+            workers.push(worker());
+        }
+        await Promise.all(workers);
+        return results;
+    }
 
     function applyPreset(key) {
         document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
@@ -1191,16 +1270,29 @@
         document.getElementById('apiEndpoint').value = cfg.endpoint;
         document.getElementById('apiKey').placeholder = cfg.placeholder;
 
-        // If default model exists in select, set it
         const sel = document.getElementById('modelSelect');
-        const exists = Array.from(sel.options).some(o => o.value === cfg.defaultModel);
-        if (!exists) {
-            const opt = document.createElement('option');
-            opt.value = cfg.defaultModel;
-            opt.textContent = `${cfg.defaultModel} (기본값)`;
-            sel.prepend(opt);
+        if (key === 'gemini') {
+            sel.innerHTML = '';
+            GEMINI_MODELS.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = m.name;
+                sel.appendChild(opt);
+            });
+            sel.value = cfg.defaultModel;
+            cachedModelList = GEMINI_MODELS;
+        } else {
+            const exists = Array.from(sel.options).some(o => o.value === cfg.defaultModel);
+            if (!exists) {
+                const opt = document.createElement('option');
+                opt.value = cfg.defaultModel;
+                opt.textContent = `${cfg.defaultModel} (기본값)`;
+                sel.prepend(opt);
+            }
+            sel.value = cfg.defaultModel;
         }
-        sel.value = cfg.defaultModel;
+
+        updateSpeedModeIndicator();
     }
 
     // Toast Notification Utility
@@ -1268,10 +1360,7 @@
                 }
             });
         }
-        // 저장된 엔드포인트가 있을 때만 자동 동기화 (불필요한 자동 네트워크 요청 방지)
-        if (savedEndpoint) {
-            fetchLiveModels(true);
-        }
+        updateSpeedModeIndicator();
     });
 
     function saveApiSettings() {
@@ -1349,6 +1438,7 @@
             if (savedModel && Array.from(sel.options).some(o => o.value === savedModel)) {
                 sel.value = savedModel;
             }
+            updateSpeedModeIndicator();
 
             if (!isSilent) {
                 showToast(`🎉 최신 모델 ${list.length}개를 성공적으로 동기화했습니다!`);
@@ -1467,6 +1557,7 @@
         if (Array.from(sel.options).some(o => o.value === current)) {
             sel.value = current;
         }
+        updateSpeedModeIndicator();
     }
 
     function filterModelDropdown() {
@@ -2012,25 +2103,40 @@ ${keywordsText}`;
             return;
         }
 
+        const isGemini = isGeminiActive();
+        const concurrency = isGemini ? 3 : 1;
+
         const stLore = document.getElementById('statusLorebook');
         if (stLore) {
             stLore.className = 'loading';
-            stLore.innerText = `⏳ 로어북 번역 중 (0/${entries.length})...`;
+            stLore.innerText = isGemini ? `⏳ 초고속 병렬 번역 중 (총 ${entries.length}개)...` : `⏳ 로어북 번역 중 (0/${entries.length})...`;
         }
+
+        let completed = 0;
+        const tasks = entries.map((_, i) => async () => {
+            const ok = await retrySingleLorebookEntry(i);
+            completed++;
+            if (stLore) stLore.innerText = `⏳ 로어북 번역 중 (${completed}/${entries.length})...`;
+            if (!isGemini) await sleep(400);
+            return ok;
+        });
+
+        await runTasksWithConcurrency(tasks, concurrency);
 
         let anyFail = false;
         for (let i = 0; i < entries.length; i++) {
-            if (stLore) stLore.innerText = `⏳ 로어북 번역 중 (${i + 1}/${entries.length})...`;
-            const ok = await retrySingleLorebookEntry(i);
-            if (!ok) anyFail = true;
-            await sleep(400);
+            const taContent = document.getElementById(`trans_lore_content_${i}`);
+            const inputKeys = document.getElementById(`trans_lore_keys_${i}`);
+            if ((taContent && taContent.value.startsWith('[')) || (inputKeys && inputKeys.value.startsWith('['))) {
+                anyFail = true; break;
+            }
         }
 
         if (stLore) {
             stLore.className = anyFail ? 'loading status-error' : 'loading status-ok';
             stLore.innerText = anyFail ? '✗ 일부 실패' : '✓ 로어북 전체 완료';
         }
-        showToast(anyFail ? '로어북 일부 항목 번역에 실패했습니다.' : '로어북 전체 번역이 완료되었습니다!');
+        showToast(anyFail ? '로어북 일부 항목 번역에 실패했습니다.' : (isGemini ? '⚡ Gemini 초고속 로어북 번역 완료!' : '로어북 전체 번역이 완료되었습니다!'));
     }
 
     // Drag & Drop / File Handling
@@ -2262,9 +2368,11 @@ ${keywordsText}`;
 
         for (const item of items) {
             const el = document.getElementById(item.id);
-            if (el.value.startsWith('[번역 실패') || el.value === '번역 대기 중...') {
-                await retrySingleItem(item.type);
-                await sleep(400);
+            if (el && (el.value.startsWith('[번역 실패') || el.value === '번역 대기 중...')) {
+                tasks.push(async () => {
+                    await retrySingleItem(item.type);
+                    if (!isGemini) await sleep(400);
+                });
             }
         }
 
@@ -2277,85 +2385,141 @@ ${keywordsText}`;
             const needsRetry = (transKeysInput && (transKeysInput.value === '번역 대기 중...' || transKeysInput.value.startsWith('['))) ||
                                (transContentTa && (transContentTa.value === '번역 대기 중...' || transContentTa.value.startsWith('[')));
             if (needsRetry) {
-                await retrySingleLorebookEntry(i);
-                await sleep(400);
+                tasks.push(async () => {
+                    await retrySingleLorebookEntry(i);
+                    if (!isGemini) await sleep(400);
+                });
             }
         }
+
+        if (tasks.length === 0) {
+            showToast('재번역이 필요한 실패 항목이 없습니다.');
+            return;
+        }
+
+        showToast(isGemini ? `⚡ Gemini 병렬 재번역 시작 (${tasks.length}개 항목)...` : `⏳ 순차 재번역 시작 (${tasks.length}개 항목)...`);
+        await runTasksWithConcurrency(tasks, concurrency);
+        showToast('실패 항목 재번역 처리 완료');
+        updateDiffInspector();
     }
 
     async function translateAllSequential() {
         const d = globalCardObj.data || globalCardObj;
+        const isGemini = isGeminiActive();
+        const concurrency = isGemini ? 3 : 1;
 
         document.querySelectorAll('.loading').forEach(el => {
             el.className = 'loading';
             el.innerText = '대기 중';
         });
 
+        const tasks = [];
+
+        // 1. Greetings
         const textareas = document.querySelectorAll('.greeting-trans-input');
-        let anyFail = false;
+        const stFirst = document.getElementById('statusFirstMes');
+        let greetingsCompleted = 0;
         for (let i = 0; i < textareas.length; i++) {
-            const ta = textareas[i];
             const rawEl = document.getElementById(`raw_greeting_${i}`);
             const rawText = rawEl ? rawEl.innerText : '';
-            
             if (rawText && rawText !== '(내용 없음)') {
-                document.getElementById('statusFirstMes').innerText = `⏳ 번역 중 (${i+1}/${textareas.length})...`;
-                ta.value = '⏳ 자연스러운 문체로 번역 중... (0초 경과)';
-                try {
-                    const res = await translateTextSmart(rawText, true, (msg) => {
-                        ta.value = msg;
-                        document.getElementById('statusFirstMes').innerText = `(${i+1}/${textareas.length}) ` + msg.replace('⏳ 자연스러운 문체로 ', '');
-                    });
-                    ta.value = res;
-                } catch (e) {
-                    ta.value = `[번역 실패: ${e.message}]`;
-                    anyFail = true;
-                }
-                await sleep(400);
+                tasks.push(async () => {
+                    if (stFirst) stFirst.innerText = `⏳ 번역 중...`;
+                    await retrySingleGreeting(i);
+                    greetingsCompleted++;
+                    if (stFirst) stFirst.innerText = `⏳ 번역 중 (${greetingsCompleted}/${textareas.length})...`;
+                    if (!isGemini) await sleep(400);
+                });
             }
         }
-        const stFirst = document.getElementById('statusFirstMes');
-        stFirst.className = anyFail ? 'loading status-error' : 'loading status-ok';
-        stFirst.innerText = anyFail ? '✗ 일부 실패' : '✓ 완료';
 
+        // 2. Description
         if (d.description && d.description.trim() !== '') {
-            await retrySingleItem('desc');
-            await sleep(400);
-        }
-        if (d.mes_example || d.mes_examples) {
-            await retrySingleItem('mesEx');
-            await sleep(400);
-        }
-        if (d.personality && d.personality.trim() !== '') {
-            await retrySingleItem('personality');
-            await sleep(400);
-        }
-        if (d.scenario && d.scenario.trim() !== '') {
-            await retrySingleItem('scenario');
-            await sleep(400);
+            tasks.push(async () => {
+                await retrySingleItem('desc');
+                if (!isGemini) await sleep(400);
+            });
         }
 
-        // 6. Lorebook Translation
+        // 3. Message Examples
+        if (d.mes_example || d.mes_examples) {
+            tasks.push(async () => {
+                await retrySingleItem('mesEx');
+                if (!isGemini) await sleep(400);
+            });
+        }
+
+        // 4. Personality
+        if (d.personality && d.personality.trim() !== '') {
+            tasks.push(async () => {
+                await retrySingleItem('personality');
+                if (!isGemini) await sleep(400);
+            });
+        }
+
+        // 5. Scenario
+        if (d.scenario && d.scenario.trim() !== '') {
+            tasks.push(async () => {
+                await retrySingleItem('scenario');
+                if (!isGemini) await sleep(400);
+            });
+        }
+
+        // 6. Lorebook entries
         const cb = getCardCharacterBook(globalCardObj);
         const loreEntries = getLorebookEntries(cb);
         if (loreEntries && loreEntries.length > 0) {
             const stLore = document.getElementById('statusLorebook');
             if (stLore) {
                 stLore.className = 'loading';
-                stLore.innerText = `⏳ 로어북 번역 중 (0/${loreEntries.length})...`;
+                stLore.innerText = isGemini ? `⏳ 초고속 병렬 번역 중...` : `⏳ 로어북 번역 중 (0/${loreEntries.length})...`;
             }
-            let loreFail = false;
+            let loreCompleted = 0;
             for (let i = 0; i < loreEntries.length; i++) {
-                if (stLore) stLore.innerText = `⏳ 로어북 번역 중 (${i + 1}/${loreEntries.length})...`;
-                const ok = await retrySingleLorebookEntry(i);
-                if (!ok) loreFail = true;
-                await sleep(400);
-            }
-            if (stLore) {
-                stLore.className = loreFail ? 'loading status-error' : 'loading status-ok';
-                stLore.innerText = loreFail ? '✗ 일부 실패' : '✓ 완료';
+                tasks.push(async () => {
+                    await retrySingleLorebookEntry(i);
+                    loreCompleted++;
+                    if (stLore) stLore.innerText = `⏳ 로어북 번역 중 (${loreCompleted}/${loreEntries.length})...`;
+                    if (!isGemini) await sleep(400);
+                });
             }
         }
+
+        const totalTasks = tasks.length;
+        if (totalTasks === 0) return;
+
+        const btnAll = document.getElementById('btnTranslateAll');
+        if (btnAll) btnAll.disabled = true;
+
+        showToast(isGemini ? `⚡ Google Gemini 감지: 초고속 병렬 번역 가동 (${totalTasks}개 동시 처리)` : `🛡️ 순차 번역 가동 (오픈라우터 429 방지 / 총 ${totalTasks}개)`);
+
+        await runTasksWithConcurrency(tasks, concurrency);
+
+        if (btnAll) btnAll.disabled = false;
+
+        // Final status evaluations
+        if (stFirst) {
+            const fail = Array.from(textareas).some(ta => ta.value.startsWith('[번역 실패'));
+            stFirst.className = fail ? 'loading status-error' : 'loading status-ok';
+            stFirst.innerText = fail ? '✗ 일부 실패' : '✓ 완료';
+        }
+
+        const stLore = document.getElementById('statusLorebook');
+        if (stLore && loreEntries.length > 0) {
+            let loreFail = false;
+            for (let i = 0; i < loreEntries.length; i++) {
+                const taContent = document.getElementById(`trans_lore_content_${i}`);
+                const inputKeys = document.getElementById(`trans_lore_keys_${i}`);
+                if ((taContent && taContent.value.startsWith('[')) || (inputKeys && inputKeys.value.startsWith('['))) {
+                    loreFail = true; break;
+                }
+            }
+            stLore.className = loreFail ? 'loading status-error' : 'loading status-ok';
+            stLore.innerText = loreFail ? '✗ 일부 실패' : '✓ 완료';
+        }
+
+        updateDiffInspector();
+        showToast(isGemini ? '⚡ Google Gemini 초고속 번역이 완료되었습니다!' : '✅ 전체 번역 완료!');
     }
 
     // Save & Download Logic (CRC32 & Chunk Injection)
