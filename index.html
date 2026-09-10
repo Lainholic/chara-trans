@@ -34,10 +34,13 @@
             padding: 20px 16px 60px;
             display: flex;
             justify-content: center;
+            overflow-x: hidden;
         }
         .container {
             width: 100%;
             max-width: 1120px;
+            min-width: 0;
+            box-sizing: border-box;
         }
 
         /* Header */
@@ -209,18 +212,26 @@
         }
         .save-options {
             display: flex;
-            gap: 14px;
+            gap: 12px 16px;
             font-size: 13px;
             align-items: center;
             flex-wrap: wrap;
+            flex: 1 1 auto;
+            min-width: 0;
         }
         .save-options label {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 6px;
             cursor: pointer;
+            white-space: nowrap;
         }
-        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
 
         /* Card Header Info */
         .card-header {
@@ -249,7 +260,12 @@
             margin-bottom: 4px;
             word-break: break-all;
         }
-        .char-creator { font-size: 13px; color: var(--text-muted); }
+        .char-creator {
+            font-size: 13px;
+            color: var(--text-muted);
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
 
         /* Section Box */
         .section-box {
@@ -273,8 +289,14 @@
         /* Grid Panes */
         .content-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
             gap: 12px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .content-grid > div {
+            min-width: 0;
+            width: 100%;
         }
         @media (max-width: 768px) {
             .content-grid { grid-template-columns: 1fr; }
@@ -288,9 +310,12 @@
             line-height: 1.65;
             white-space: pre-wrap;
             word-break: break-word;
+            overflow-wrap: anywhere;
             max-height: 300px;
             overflow-y: auto;
             border: 1px solid var(--border-color);
+            box-sizing: border-box;
+            width: 100%;
         }
         textarea.pane {
             width: 100%;
@@ -399,12 +424,14 @@
         }
         .diff-table-wrapper {
             overflow-x: auto;
+            max-width: 100%;
             border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.08);
             background: #111827;
         }
         .diff-table {
             width: 100%;
+            table-layout: fixed;
             border-collapse: collapse;
             font-size: 12.5px;
             text-align: left;
@@ -415,11 +442,14 @@
             padding: 10px 12px;
             font-weight: 600;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            word-break: break-all;
         }
         .diff-table td {
             padding: 8px 12px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            vertical-align: top;
+            vertical-align: middle;
+            word-break: break-all;
+            overflow-wrap: anywhere;
         }
         .diff-tag-preserved {
             display: inline-block;
@@ -430,6 +460,7 @@
             border-radius: 4px;
             font-size: 11px;
             font-weight: 600;
+            white-space: nowrap;
         }
         .diff-tag-translated {
             display: inline-block;
@@ -440,16 +471,18 @@
             border-radius: 4px;
             font-size: 11px;
             font-weight: 600;
+            white-space: nowrap;
         }
         .diff-val-preview {
             font-family: monospace;
             font-size: 11.5px;
             color: #e2e8f0;
-            max-height: 40px;
+            max-height: 48px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
             display: block;
+            max-width: 100%;
         }
     </style>
 </head>
@@ -686,9 +719,9 @@
                     <span>🛡️ 무손실 청크 무결성 검증 (Lossless Diff Inspector)</span>
                     <span class="badge-lossless" id="badgeLosslessStatus">✅ 100% 무손실 보존 검증됨</span>
                 </div>
-                <span id="diffToggleArrow" style="font-size: 13px; color: var(--text-muted); font-weight: 600;">▼ 접기</span>
+                <span id="diffToggleArrow" style="font-size: 13px; color: var(--text-muted); font-weight: 600;">▶ 펼쳐보기</span>
             </div>
-            <div id="diffInspectorContent" style="display: block;">
+            <div id="diffInspectorContent" style="display: none;">
                 <p style="font-size: 12.5px; color: var(--text-muted); margin: 6px 0 14px; line-height: 1.5;">
                     SillyTavern 및 RisuAI 표준 규격(V2/V3)에 따라 원본 이미지 청크(IHDR, IDAT, IEND)와 캐릭터 카드 tEXt 메타데이터가 1바이트의 손실도 없이 온전히 보존되는지 실시간 대조 검증합니다.
                 </p>
@@ -1747,6 +1780,7 @@ ${chunkText}`;
             box.style.display = 'block';
             if (arrow) arrow.innerText = '▼ 접기';
             updateDiffInspector();
+            document.getElementById('chunkInspectorBox')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         } else {
             box.style.display = 'none';
             if (arrow) arrow.innerText = '▶ 펼쳐보기';
