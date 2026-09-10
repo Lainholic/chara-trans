@@ -1312,14 +1312,20 @@ ${chunkText}`;
             throw fetchErr;
         }
 
-        if (res.status === 429 && retryCount < 3) {
-            await sleep(5000);
+        if ((res.status === 429 || res.status === 502 || res.status === 503) && retryCount < 2) {
+            await sleep(3000);
             return await requestChunkTranslation(chunkText, isProse, retryCount + 1);
         }
 
         if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
-            throw new Error(errData.error?.message || `HTTP ${res.status}`);
+            let msg = errData.error?.message || `HTTP ${res.status}`;
+            if (msg.includes('Provider returned error')) {
+                const prov = errData.error?.metadata?.provider_name;
+                const raw = errData.error?.metadata?.raw;
+                msg = `제공사(${prov || 'AI'}) 서버 일시 과부하입니다. 상단 드롭다운에서 다른 모델(Gemini, DeepSeek 등)을 선택하시거나 [⚠️ 실패 항목만 재번역]을 눌러주세요.${raw ? ' (' + raw + ')' : ''}`;
+            }
+            throw new Error(msg);
         }
 
         const data = await res.json();
