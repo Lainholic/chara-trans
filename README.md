@@ -6,7 +6,7 @@
 [![OpenRouter](https://img.shields.io/badge/OpenRouter-Compatible-38bdf8.svg)]()
 [![Spec: V2/V3](https://img.shields.io/badge/TavernCard-V2%2FV3%20Compatible-orange.svg)]()
 
-A lightweight, 100% client-side web application to translate, edit, and localize AI Character Cards (PNG/JSON) for **RisuAI**, **SillyTavern**, and **Chub.ai** with **Zero Censorship** and **Lossless PNG Metadata Re-injection**.
+A lightweight, 100% client-side web application to translate, edit, and localize AI Character Cards (PNG/JSON) for **RisuAI**, **SillyTavern**, and **Chub.ai** with **Direct Model Pipelines** and **Lossless PNG Metadata Re-injection**.
 
 ---
 
@@ -17,8 +17,8 @@ A lightweight, 100% client-side web application to translate, edit, and localize
   - Great for localizing foreign cards, or translating your own Korean/Japanese cards into English for uploading to Chub.ai!
 - 🔄 **Real-Time Dynamic Model Syncing**:
   - Connects to OpenRouter or any OpenAI-compatible `/models` API to fetch 400+ live models on the fly. No outdated hardcoded lists—always up to date.
-- ⚡ **Zero Censorship (Uncensored Translations)**:
-  - Supports **DeepSeek V3/R1**, **Llama 3.3 70B**, **Claude**, and local Ollama models. Seamlessly translates mature (NSFW), dark fantasy, and gritty roleplay cards without refusal filters.
+- ⚡ **Neutral & Direct Client Pipeline**:
+  - The application enforces **no proprietary moderation or refusal wrappers**; prompt payloads are passed directly to your configured AI endpoint. Supports **DeepSeek V3/R1**, **Llama 3.3 70B**, **Claude**, and local Ollama models for complex creative roleplay and dark fantasy cards.
 - 🎯 **Strict System Markup & Tag Preservation**:
   - Intelligently preserves `{{char}}`, `{{user}}`, `<START>`, quotes (`"..."`), and action asterisks (`*...*`).
 - 🖼️ **Lossless PNG Chunk Parsing & Re-injection**:
@@ -62,14 +62,22 @@ A lightweight, 100% client-side web application to translate, edit, and localize
 > **[RisuAI & 실리태번 공용] AI 캐릭터 카드 다국어 번역 및 메타데이터 에디터**
 
 100% 브라우저 로컬에서 구동되는 무설치 웹 기반 캐릭터 카드 번역 에디터입니다.  
-RisuAI, SillyTavern, Chub.ai의 V2/V3 PNG 카드 메타데이터(`chara`, `ccv3`)를 손상 없이 파싱하고, OpenRouter 및 OpenAI 호환 모델(DeepSeek 등)을 통해 검열 없이 전 세계 모든 언어로 자연스럽게 번역하여 다시 정상 PNG 카드로 구워냅니다.
+RisuAI, SillyTavern, Chub.ai의 V2/V3 PNG 카드 메타데이터(`chara`, `ccv3`)를 손상 없이 파싱하고, OpenRouter 및 OpenAI 호환 모델(DeepSeek 등)을 통해 앱 자체의 임의 검열 필터 없이 전 세계 모든 언어로 자연스럽게 번역하여 다시 정상 PNG 카드로 구워냅니다.
 
 ### ✨ 한국어 주요 특징
 1. **글로벌 다국어 지원**: 영어 카드를 한국어로 번역하거나, 내가 만든 한글 카드를 영어/일본어로 번역하여 해외 사이트에 수출 가능.
 2. **실시간 최신 모델 자동 동기화**: 오픈라우터의 최신 모델 목록을 실시간으로 긁어와 드롭다운에 채워주므로 코드 수정 불필요.
-3. **검열 0%**: 수위 높은 성인향(NSFW), 피폐물, 다크 판타지 카드도 튕김 없이 100% 번역.
+3. **클라이언트 필터 미부과 (Direct Pipeline)**: 앱 자체적인 중간 검열 레이어 없이 사용자가 설정한 AI 모델에 원본을 직결하여, 다크 판타지나 복잡한 롤플레잉 서사도 거부 없이 매끄럽게 번역.
 4. **특수 태그 보존**: `{{char}}`, `{{user}}`, `<START>` 등의 마크업 태그 완벽 보존.
 5. **PNG 무손실 재주입**: 이미지 화질 손상 없이 번역된 메타데이터를 바이너리 레벨에서 다시 구워내어 RisuAI/실리태번에서 바로 사용 가능.
+
+---
+
+## ⚖️ Compliance & Disclaimer / 준수사항 및 면책고지
+
+- **User Responsibility**: CharaTrans is an open-source client-side developer utility. The user is solely responsible for the content translated and generated using this application.
+- **Provider Terms**: All API requests are subject to the Terms of Service and Acceptable Use Policies of your selected AI endpoint provider (e.g., OpenRouter, OpenAI, Anthropic, or local Ollama hosts).
+- **Prohibited Content**: Users must strictly comply with all applicable local and international laws. Using this tool to process unlawful content, non-consensual imagery/metadata, or illegal material (including CSAM) is strictly prohibited.
 
 ---
 

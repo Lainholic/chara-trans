@@ -336,7 +336,7 @@
         <!-- Quick Preset Buttons -->
         <div class="preset-row">
             <span class="preset-label" id="lblQuickPresets">⚡ 빠른 엔드포인트 선택:</span>
-            <button type="button" class="preset-btn active" onclick="applyPreset('openrouter')">🌐 OpenRouter (추천/검열없음)</button>
+            <button type="button" class="preset-btn active" onclick="applyPreset('openrouter')">🌐 OpenRouter (추천 / 필터 미부과)</button>
             <button type="button" class="preset-btn" onclick="applyPreset('deepseek')">⚡ DeepSeek 공식</button>
             <button type="button" class="preset-btn" onclick="applyPreset('gemini')">🤖 Google Gemini (OpenAI 호환)</button>
             <button type="button" class="preset-btn" onclick="applyPreset('ollama')">💻 로컬 Ollama (무료/오프라인)</button>
@@ -520,6 +520,12 @@
                     <textarea id="transScenario" class="pane"></textarea>
                 </div>
             </div>
+        <!-- Footer Disclaimer & Compliance -->
+        <div style="margin-top: 32px; margin-bottom: 20px; padding: 18px 22px; background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; text-align: center;">
+            <div style="font-weight: 600; margin-bottom: 6px; color: var(--text-main);">⚖️ 이용 안내 및 책임 고지 (Compliance & Disclaimer)</div>
+            본 도구는 100% 브라우저 로컬(Client-Side) 환경에서 구동되는 오픈소스 변환 유틸리티로, 별도의 중계 서버나 사용자 데이터를 수집하지 않습니다.<br>
+            모든 AI 번역 요청은 사용자가 직접 입력한 엔드포인트 및 API Key를 통해 공급사로 직접 전달되며, 생성 및 번역된 콘텐츠의 모든 법적 책임은 사용자에게 있습니다.<br>
+            선택한 AI 공급사의 이용약관(TOS) 및 관련 법률을 반드시 준수하여 주십시오. 불법적이거나 타인의 권리를 침해하는 용도로의 사용은 엄격히 금지됩니다.
         </div>
 
     </div>
@@ -563,7 +569,7 @@
             subtitle_badge: "RisuAI & 실리태번 공용 2.0",
             security_badge: "🛡️ 100% 브라우저 로컬 구동 (서버 없음 / 키 유출 0%)",
             quick_presets: "⚡ 빠른 엔드포인트 선택:",
-            preset_openrouter: "🌐 OpenRouter (추천/검열없음)",
+            preset_openrouter: "🌐 OpenRouter (추천 / 필터 미부과)",
             preset_deepseek: "⚡ DeepSeek 공식",
             preset_gemini: "🤖 Google Gemini (OpenAI 호환)",
             preset_ollama: "💻 로컬 Ollama (오프라인/무료)",
@@ -600,7 +606,7 @@
             subtitle_badge: "Universal V2/V3 Spec 2.0",
             security_badge: "🛡️ 100% Client-Side (No server / Zero key leakage)",
             quick_presets: "⚡ Quick Presets:",
-            preset_openrouter: "🌐 OpenRouter (Uncensored / Rec)",
+            preset_openrouter: "🌐 OpenRouter (Recommended / Direct)",
             preset_deepseek: "⚡ DeepSeek Official",
             preset_gemini: "🤖 Google Gemini (OpenAI Compatible)",
             preset_ollama: "💻 Local Ollama (Free/Offline)",
@@ -637,7 +643,7 @@
             subtitle_badge: "RisuAI & SillyTavern 共通 2.0",
             security_badge: "🛡️ 100% クライアント完結 (サーバーなし / キー流出ゼロ)",
             quick_presets: "⚡ プリセット選択:",
-            preset_openrouter: "🌐 OpenRouter (おすすめ/無検閲)",
+            preset_openrouter: "🌐 OpenRouter (推奨 / ダイレクト)",
             preset_deepseek: "⚡ DeepSeek 公式",
             preset_gemini: "🤖 Google Gemini (OpenAI互換)",
             preset_ollama: "💻 ローカル Ollama (無料/オフライン)",
