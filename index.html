@@ -1438,7 +1438,8 @@ ${chunkText}`;
 
     async function translateTextSmart(text, isProse = false, onProgress = null) {
         if (!text || text.trim() === '') return '';
-        if (isProse || text.length < 1000) {
+        // 최신 LLM(DeepSeek, Gemini, GPT-4o 등)은 4,000자 이상도 한 번에 완벽 처리 가능
+        if (isProse || text.length < 4000) {
             return await requestChunkTranslation(text, isProse, 0, (sec) => {
                 if (typeof sec === 'string') {
                     if (onProgress) onProgress(sec);
@@ -1453,7 +1454,7 @@ ${chunkText}`;
         const chunks = [];
         let cur = '';
         for (const line of lines) {
-            if ((cur + '\n' + line).length > 900) {
+            if ((cur + '\n' + line).length > 3500) {
                 if (cur) chunks.push(cur);
                 cur = line;
             } else {
