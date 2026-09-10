@@ -1183,7 +1183,7 @@
         gemini: {
             endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai',
             placeholder: 'AIzaSy... (Google AI Studio Key)',
-            defaultModel: 'gemini-2.5-flash-lite'
+            defaultModel: 'gemini-3.1-flash-lite'
         },
         ollama: {
             endpoint: 'http://localhost:11434/v1',
@@ -1193,25 +1193,16 @@
     };
 
     const GEMINI_MODELS = [
-        // ⚡ Flash-Lite 시리즈 (초경량 / 극가성비 / 최고 속도 번역)
-        { id: 'gemini-2.5-flash-lite', name: '⚡ gemini-2.5-flash-lite (초경량 극가성비 추천 ⚡)', group: '⚡ Flash-Lite (초경량 / 극가성비 / 최고속도)' },
-        { id: 'gemini-2.0-flash-lite', name: '⚡ gemini-2.0-flash-lite (플래시 라이트 2.0 공식)', group: '⚡ Flash-Lite (초경량 / 극가성비 / 최고속도)' },
-        { id: 'gemini-2.0-flash-lite-preview-02-05', name: '⚡ gemini-2.0-flash-lite-preview-02-05', group: '⚡ Flash-Lite (초경량 / 극가성비 / 최고속도)' },
-        { id: 'gemini-3.8-flash-lite', name: '⚡ gemini-3.8-flash-lite (최신 시즌 플래시 라이트)', group: '⚡ Flash-Lite (초경량 / 극가성비 / 최고속도)' },
-        { id: 'gemini-3.5-flash-lite', name: '⚡ gemini-3.5-flash-lite', group: '⚡ Flash-Lite (초경량 / 극가성비 / 최고속도)' },
-        { id: 'gemini-3.0-flash-lite', name: '⚡ gemini-3.0-flash-lite', group: '⚡ Flash-Lite (초경량 / 극가성비 / 최고속도)' },
-        { id: 'gemini-1.5-flash-8b', name: '⚡ gemini-1.5-flash-8b (초경량 8B 레거시)', group: '⚡ Flash-Lite (초경량 / 극가성비 / 최고속도)' },
+        // ⚡ Flash-Lite (초경량 / 극가성비 / 최고 속도 번역)
+        { id: 'gemini-3.1-flash-lite', name: '⚡ gemini-3.1-flash-lite (공식 현행 플래시 라이트 추천 ⚡)', group: '⚡ Flash-Lite (초경량 / 극가성비)' },
 
-        // 🚀 Flash 시리즈 (고속 표준 번역)
-        { id: 'gemini-3.8-flash', name: '🚀 gemini-3.8-flash (최신 시즌 플래시 🚀)', group: '🚀 Flash (고속 표준 번역)' },
-        { id: 'gemini-3.5-flash', name: '🚀 gemini-3.5-flash', group: '🚀 Flash (고속 표준 번역)' },
-        { id: 'gemini-3.0-flash', name: '🚀 gemini-3.0-flash', group: '🚀 Flash (고속 표준 번역)' },
-        { id: 'gemini-2.5-flash', name: '🚀 gemini-2.5-flash', group: '🚀 Flash (고속 표준 번역)' },
-        { id: 'gemini-2.0-flash', name: '🚀 gemini-2.0-flash (구버전 레거시)', group: '🚀 Flash (고속 표준 번역)' },
+        // 🚀 Flash (고속 표준 번역)
+        { id: 'gemini-3.8-flash', name: '🚀 gemini-3.8-flash (최신 시즌 초고속 플래시 🚀)', group: '🚀 Flash (고속 표준 번역)' },
+        { id: 'gemini-3.7-flash', name: '🚀 gemini-3.7-flash (현행 주력 워크호스)', group: '🚀 Flash (고속 표준 번역)' },
+        { id: 'gemini-3.5-flash', name: '🚀 gemini-3.5-flash (고효율 플래시)', group: '🚀 Flash (고속 표준 번역)' },
 
-        // 🧠 Pro 시리즈 (고지능 심층 번역)
-        { id: 'gemini-3.8-pro', name: '🧠 gemini-3.8-pro (고지능 심층 번역 🧠)', group: '🧠 Pro (고지능 심층 번역)' },
-        { id: 'gemini-2.5-pro', name: '🧠 gemini-2.5-pro', group: '🧠 Pro (고지능 심층 번역)' }
+        // 🧠 Pro (고지능 심층 번역)
+        { id: 'gemini-3.1-pro', name: '🧠 gemini-3.1-pro (플래그십 심층 추론 🧠)', group: '🧠 Pro (고지능 심층 번역)' }
     ];
 
     function isGeminiActive() {
