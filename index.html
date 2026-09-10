@@ -708,11 +708,13 @@
                     </select>
                 </div>
                 <span style="font-weight:bold; color:var(--text-muted); margin-left:8px;" id="lblSaveOpts">💾 저장 옵션:</span>
-                <label><input type="checkbox" id="saveGreetingKo" checked disabled> <span id="optGreetingKo">첫 메시지(번역본 고정)</span></label>
-                <label title="Toggle saving translated lore to card"><input type="checkbox" id="saveDescKo" checked onchange="updateDiffInspector()"> <span id="optDescKo">설명/성격/배경도 번역본으로 저장</span></label>
-                <label><input type="checkbox" id="saveMesExampleKo" checked onchange="updateDiffInspector()"> <span id="optMesExKo">대화 예시 번역본 저장</span></label>
-                <label><input type="checkbox" id="chkInjectPrompt" checked onchange="updateDiffInspector()"> <span id="optInjectPrompt">선택 언어 출력 지침 주입</span></label>
-                <label title="로어북(키워드+본문) 번역본을 카드에 반영하여 저장"><input type="checkbox" id="saveLorebookKo" checked onchange="updateDiffInspector()"> <span id="optLorebookKo">로어북(키워드+본문) 번역본 저장</span></label>
+                <label title="첫 메시지 및 대체 그리팅을 번역본으로 저장"><input type="checkbox" id="saveGreetingKo" checked onchange="updateDiffInspector()"> <span id="optGreetingKo">첫 메시지 저장</span></label>
+                <label title="캐릭터 설명을 번역본으로 저장"><input type="checkbox" id="saveDescKo" checked onchange="updateDiffInspector()"> <span id="optDescKo">설명(Description) 저장</span></label>
+                <label title="성격 설정을 번역본으로 저장"><input type="checkbox" id="savePersonalityKo" checked onchange="updateDiffInspector()"> <span id="optPersonalityKo">성격(Personality) 저장</span></label>
+                <label title="시나리오 및 배경을 번역본으로 저장"><input type="checkbox" id="saveScenarioKo" checked onchange="updateDiffInspector()"> <span id="optScenarioKo">시나리오(Scenario) 저장</span></label>
+                <label title="대화 예시를 번역본으로 저장"><input type="checkbox" id="saveMesExampleKo" checked onchange="updateDiffInspector()"> <span id="optMesExKo">대화 예시 저장</span></label>
+                <label title="로어북(키워드+본문) 번역본을 카드에 반영하여 저장"><input type="checkbox" id="saveLorebookKo" checked onchange="updateDiffInspector()"> <span id="optLorebookKo">로어북 저장</span></label>
+                <label title="선택한 목표 언어로 답변하도록 시스템 지침 주입"><input type="checkbox" id="chkInjectPrompt" checked onchange="updateDiffInspector()"> <span id="optInjectPrompt">출력 지침 주입</span></label>
             </div>
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:10px;">
                 <div id="speedModeBadge" style="font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;"></div>
@@ -2765,38 +2767,61 @@ ${keywordsText}`;
         const target = clone.data ? clone.data : clone;
         const originalData = globalCardObj.data ? globalCardObj.data : globalCardObj;
 
-        const textareas = document.querySelectorAll('.greeting-trans-input');
-        textareas.forEach(ta => {
-            const isMain = ta.dataset.ismain === 'true';
-            const idx = parseInt(ta.dataset.index, 10);
-            if (isMain) {
-                target.first_mes = ta.value;
-                if (target.greeting) target.greeting = ta.value;
-            } else {
-                if (Array.isArray(target.alternate_greetings)) {
-                    target.alternate_greetings[idx] = ta.value;
+        // 1. First Message & Alternate Greetings
+        if (document.getElementById('saveGreetingKo')?.checked) {
+            const textareas = document.querySelectorAll('.greeting-trans-input');
+            textareas.forEach(ta => {
+                const isMain = ta.dataset.ismain === 'true';
+                const idx = parseInt(ta.dataset.index, 10);
+                if (isMain) {
+                    target.first_mes = ta.value;
+                    if (target.greeting) target.greeting = ta.value;
+                } else {
+                    if (Array.isArray(target.alternate_greetings)) {
+                        target.alternate_greetings[idx] = ta.value;
+                    }
                 }
+            });
+        } else {
+            target.first_mes = originalData.first_mes || '';
+            if (target.greeting) target.greeting = originalData.greeting || '';
+            if (Array.isArray(originalData.alternate_greetings)) {
+                target.alternate_greetings = JSON.parse(JSON.stringify(originalData.alternate_greetings));
             }
-        });
+        }
 
-        if (document.getElementById('saveMesExampleKo').checked) {
+        // 2. Message Examples
+        if (document.getElementById('saveMesExampleKo')?.checked) {
             target.mes_example = document.getElementById('transMesExample').value;
             if (target.mes_examples) target.mes_examples = document.getElementById('transMesExample').value;
         } else {
             target.mes_example = originalData.mes_example || '';
+            if (target.mes_examples) target.mes_examples = originalData.mes_examples || '';
         }
 
-        if (document.getElementById('saveDescKo').checked) {
+        // 3. Description
+        if (document.getElementById('saveDescKo')?.checked) {
             target.description = document.getElementById('transDesc').value;
-            target.personality = document.getElementById('transPersonality').value;
-            target.scenario = document.getElementById('transScenario').value;
         } else {
             target.description = originalData.description || '';
+        }
+
+        // 4. Personality
+        if (document.getElementById('savePersonalityKo')?.checked) {
+            target.personality = document.getElementById('transPersonality').value;
+        } else {
             target.personality = originalData.personality || '';
+        }
+
+        // 5. Scenario
+        if (document.getElementById('saveScenarioKo')?.checked) {
+            target.scenario = document.getElementById('transScenario').value;
+        } else {
             target.scenario = originalData.scenario || '';
         }
 
-        if (document.getElementById('chkInjectPrompt').checked) {
+        // 6. System Prompt Injection
+        if (document.getElementById('chkInjectPrompt')?.checked) {
             const langCfg = getSelectedLanguageConfig();
             const injectRule = langCfg.rule;
             if (!target.system_prompt) target.system_prompt = "";
@@ -2805,6 +2830,7 @@ ${keywordsText}`;
             }
         }
 
+        // 7. Lorebook (Character Book)
         if (document.getElementById('saveLorebookKo')?.checked) {
             const cb = target.character_book || (target.data && target.data.character_book) || (clone.character_book);
             if (cb && cb.entries) {
@@ -2853,6 +2879,14 @@ ${keywordsText}`;
                 } else {
                     clone.character_book = cb;
                 }
+            }
+        } else {
+            const origCb = originalData.character_book || (globalCardObj.character_book);
+            if (origCb) {
+                const copyCb = JSON.parse(JSON.stringify(origCb));
+                target.character_book = copyCb;
+                if (clone.data) clone.data.character_book = copyCb;
+                clone.character_book = copyCb;
             }
         }
 
@@ -2905,10 +2939,7 @@ ${keywordsText}`;
         a.click();
     }
 
-    function injectChunkToPNG(buffer, keyword, text) {
-        const uint8 = new Uint8Array(buffer);
-        const insertPos = 33;
-
+    function createPngChunk(keyword, text) {
         const keyBytes = new TextEncoder().encode(keyword);
         const textBytes = new TextEncoder().encode(text);
         const chunkData = new Uint8Array(keyBytes.length + 1 + textBytes.length);
@@ -2934,11 +2965,69 @@ ${keywordsText}`;
         fullChunk[8 + length + 1] = (crc >> 16) & 0xff;
         fullChunk[8 + length + 2] = (crc >> 8) & 0xff;
         fullChunk[8 + length + 3] = crc & 0xff;
+        return fullChunk;
+    }
 
-        const out = new Uint8Array(uint8.length + fullChunk.length);
-        out.set(uint8.slice(0, insertPos), 0);
-        out.set(fullChunk, insertPos);
-        out.set(uint8.slice(insertPos), insertPos + fullChunk.length);
+    function injectChunkToPNG(buffer, keyword, text) {
+        const uint8 = new Uint8Array(buffer);
+        const chunksToKeep = [];
+        let offset = 8;
+        let ihdrChunk = null;
+
+        while (offset < uint8.length) {
+            const length = (uint8[offset] << 24) | (uint8[offset+1] << 16) | (uint8[offset+2] << 8) | uint8[offset+3];
+            const type = String.fromCharCode(...uint8.slice(offset+4, offset+8));
+            const chunkTotalLen = 12 + length;
+            const fullRawChunk = uint8.slice(offset, offset + chunkTotalLen);
+
+            if (type === 'tEXt') {
+                const chunkData = uint8.slice(offset+8, offset+8+length);
+                const nullIdx = chunkData.indexOf(0);
+                const key = new TextDecoder().decode(chunkData.slice(0, nullIdx));
+                if (key === 'chara' || key === 'ccv3') {
+                    // 기존 원본 메타데이터 청크를 완전히 삭제하여 잔여물이 남지 않게 합니다.
+                    offset += chunkTotalLen;
+                    continue;
+                }
+            }
+
+            if (type === 'IHDR') {
+                ihdrChunk = fullRawChunk;
+            } else {
+                chunksToKeep.push(fullRawChunk);
+            }
+            offset += chunkTotalLen;
+        }
+
+        // 실리태번 V2/V3 및 RisuAI 모두 대응하도록 chara와 ccv3 두 청크 모두 신규 생성
+        const charaChunk = createPngChunk('chara', text);
+        const ccv3Chunk = createPngChunk('ccv3', text);
+
+        let totalSize = 8; // PNG Header
+        if (ihdrChunk) totalSize += ihdrChunk.length;
+        totalSize += charaChunk.length;
+        totalSize += ccv3Chunk.length;
+        for (const c of chunksToKeep) {
+            totalSize += c.length;
+        }
+
+        const out = new Uint8Array(totalSize);
+        out.set(uint8.slice(0, 8), 0);
+        let pos = 8;
+        if (ihdrChunk) {
+            out.set(ihdrChunk, pos);
+            pos += ihdrChunk.length;
+        }
+        out.set(charaChunk, pos);
+        pos += charaChunk.length;
+        out.set(ccv3Chunk, pos);
+        pos += ccv3Chunk.length;
+
+        for (const c of chunksToKeep) {
+            out.set(c, pos);
+            pos += c.length;
+        }
+
         return out.buffer;
     }
 
