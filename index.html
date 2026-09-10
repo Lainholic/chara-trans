@@ -1244,7 +1244,7 @@
     }
 
     // OpenAI-Compatible Universal Translation Core
-    async function requestChunkTranslation(chunkText, isProse = false, retryCount = 0) {
+    async function requestChunkTranslation(chunkText, isProse = false, retryCount = 0, onTick = null) {
         const endpoint = document.getElementById('apiEndpoint').value.trim() || 'https://openrouter.ai/api/v1';
         const apiKey = document.getElementById('apiKey').value.trim();
         const model = document.getElementById('modelSelect').value;
@@ -1253,7 +1253,7 @@
         if (!model) throw new Error('선택된 모델이 없습니다! 먼저 상단의 [🔄 모델 동기화]를 눌러 사용할 모델을 선택해주세요.');
         const url = endpoint.replace(/\/+$/, '') + '/chat/completions';
 
-                const langConfig = getSelectedLanguageConfig();
+        const langConfig = getSelectedLanguageConfig();
         const prompt = isProse
             ? `You are an expert translator specializing in text roleplay, fiction, and character dialogue localization.
 Translate the following source text into natural, fluent, expressive ${langConfig.name}.
@@ -1283,8 +1283,17 @@ ${chunkText}`;
         };
         if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
 
+        const timeoutSec = 45;
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 60000);
+        const timeoutId = setTimeout(() => controller.abort(), timeoutSec * 1000);
+
+        let elapsed = 0;
+        if (onTick) onTick(elapsed);
+        const timer = setInterval(() => {
+            elapsed++;
+            if (onTick) onTick(elapsed);
+        }, 1000);
+
         let res;
         try {
             res = await fetch(url, {
@@ -1303,18 +1312,21 @@ ${chunkText}`;
                     temperature: 0.2
                 })
             });
+            clearInterval(timer);
             clearTimeout(timeoutId);
         } catch (fetchErr) {
+            clearInterval(timer);
             clearTimeout(timeoutId);
             if (fetchErr.name === 'AbortError') {
-                throw new Error('요청 시간 초과 (60초): AI 서버 응답이 지연되었습니다.');
+                throw new Error(`요청 시간 초과 (${timeoutSec}초): AI 서버 응답이 너무 지연되어 중단되었습니다.`);
             }
             throw fetchErr;
         }
 
         if ((res.status === 429 || res.status === 502 || res.status === 503) && retryCount < 2) {
+            if (onTick) onTick('⏳ 서버 과부하 감지: 3초 후 자동 재시도 중...');
             await sleep(3000);
-            return await requestChunkTranslation(chunkText, isProse, retryCount + 1);
+            return await requestChunkTranslation(chunkText, isProse, retryCount + 1, onTick);
         }
 
         if (!res.ok) {
@@ -1334,10 +1346,17 @@ ${chunkText}`;
         return content.trim();
     }
 
-    async function translateTextSmart(text, isProse = false) {
+    async function translateTextSmart(text, isProse = false, onProgress = null) {
         if (!text || text.trim() === '') return '';
         if (isProse || text.length < 1000) {
-            return await requestChunkTranslation(text, isProse);
+            return await requestChunkTranslation(text, isProse, 0, (sec) => {
+                if (typeof sec === 'string') {
+                    if (onProgress) onProgress(sec);
+                } else {
+                    const hint = sec > 12 ? ' (AI 응답 생성 중...)' : '';
+                    if (onProgress) onProgress(`⏳ 자연스러운 문체로 번역 중... (${sec}초 경과)${hint}`);
+                }
+            });
         }
 
         const lines = text.split('\n');
@@ -1354,9 +1373,17 @@ ${chunkText}`;
         if (cur) chunks.push(cur);
 
         const results = [];
-        for (const ch of chunks) {
+        for (let idx = 0; idx < chunks.length; idx++) {
+            const ch = chunks[idx];
             if (ch.trim() !== '') {
-                const tr = await requestChunkTranslation(ch, false);
+                const tr = await requestChunkTranslation(ch, false, 0, (sec) => {
+                    if (typeof sec === 'string') {
+                        if (onProgress) onProgress(sec);
+                    } else {
+                        const hint = sec > 12 ? ' (AI 응답 생성 중...)' : '';
+                        if (onProgress) onProgress(`⏳ [${idx + 1}/${chunks.length} 조각] 번역 중... (${sec}초 경과)${hint}`);
+                    }
+                });
                 results.push(tr);
                 await sleep(400);
             } else {
@@ -1525,9 +1552,11 @@ ${chunkText}`;
         const rawText = rawEl ? rawEl.innerText : '';
         if (!rawText) return;
 
-        ta.value = '⏳ 자연스러운 문체로 번역 중...';
+        ta.value = '⏳ 자연스러운 문체로 번역 중... (0초 경과)';
         try {
-            const res = await translateTextSmart(rawText, true);
+            const res = await translateTextSmart(rawText, true, (msg) => {
+                ta.value = msg;
+            });
             ta.value = res;
         } catch (e) {
             ta.value = `[번역 실패: ${e.message}]`;
@@ -1548,11 +1577,14 @@ ${chunkText}`;
         if (!rawText || rawText === '(내용 없음)') return;
 
         st.className = 'loading';
-        st.innerText = '⏳ 번역 중...';
-        ta.value = '⏳ 자연스러운 문체로 번역 중...';
+        st.innerText = '⏳ 번역 중... (0초)';
+        ta.value = '⏳ 자연스러운 문체로 번역 중... (0초 경과)';
 
         try {
-            const res = await translateTextSmart(rawText, isProse);
+            const res = await translateTextSmart(rawText, isProse, (msg) => {
+                ta.value = msg;
+                if (st) st.innerText = msg.replace('⏳ 자연스러운 문체로 ', '⏳ ').replace(' 번역 중...', '');
+            });
             ta.value = res;
             st.className = 'loading status-ok';
             st.innerText = '✓ 완료';
@@ -1606,8 +1638,12 @@ ${chunkText}`;
             
             if (rawText && rawText !== '(내용 없음)') {
                 document.getElementById('statusFirstMes').innerText = `⏳ 번역 중 (${i+1}/${textareas.length})...`;
+                ta.value = '⏳ 자연스러운 문체로 번역 중... (0초 경과)';
                 try {
-                    const res = await translateTextSmart(rawText, true);
+                    const res = await translateTextSmart(rawText, true, (msg) => {
+                        ta.value = msg;
+                        document.getElementById('statusFirstMes').innerText = `(${i+1}/${textareas.length}) ` + msg.replace('⏳ 자연스러운 문체로 ', '');
+                    });
                     ta.value = res;
                 } catch (e) {
                     ta.value = `[번역 실패: ${e.message}]`;
