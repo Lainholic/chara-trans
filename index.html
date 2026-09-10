@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🎭 AI 캐릭터 카드 번역 에디터 (RisuAI & 실리태번 공용)</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+    <style>
+        :root {
+            --bg-color: #1e1f22;
+            --panel-bg: #2b2d31;
+            --panel-sub: #232428;
+            --accent-color: #5865f2;
+            --accent-hover: #4752c4;
+            --openrouter-color: #0f172a;
+            --openrouter-accent: #38bdf8;
+            --text-main: #dbdee1;
+            --text-muted: #949ba4;
+            --trans-text: #57f287;
+            --border-color: #3f4147;
+            --danger-color: #ed4245;
+            --warning-color: #fee75c;
+            --success-color: #57f287;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px 16px 60px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 1120px;
+        }
+
+        /* Header */
+        .app-header {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        h1 {
+            font-size: 22px;
+            font-weight: 800;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #ffffff;
+        }
+        .header-badge {
+            background: #5865f2;
+            color: white;
+            font-size: 11.5px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+        .security-badge {
+            font-size: 12px;
+            color: var(--openrouter-accent);
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            padding: 6px 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* API Bar */
+        .api-panel {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px 18px;
+            margin-bottom: 18px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+        }
+        .preset-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .preset-label { font-size: 12.5px; font-weight: 700; color: var(--text-muted); }
+        .preset-btn {
+            background: var(--panel-sub);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .preset-btn:hover { background: #35373c; border-color: var(--openrouter-accent); color: #fff; }
+        .preset-btn.active { background: rgba(56, 189, 248, 0.2); border-color: var(--openrouter-accent); color: var(--openrouter-accent); }
+
+        .api-inputs-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1.6fr 1.6fr auto;
+            gap: 10px;
+            align-items: center;
+        }
+        @media (max-width: 900px) {
+            .api-inputs-grid { grid-template-columns: 1fr; }
+        }
+
+        .input-group { display: flex; flex-direction: column; gap: 4px; }
+        .input-label { font-size: 11px; font-weight: 700; color: var(--text-muted); }
+        
+        input, select {
+            background: #111214;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 9px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            font-family: inherit;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus { border-color: var(--openrouter-accent); }
+
+        .model-select-wrapper {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        /* Buttons */
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 9px 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-family: inherit;
+        }
+        button:hover { background-color: var(--accent-hover); }
+        button.btn-fetch { background-color: #2b74ff; white-space: nowrap; }
+        button.btn-fetch:hover { background-color: #1a63ea; }
+        button.btn-save-cfg { background-color: #248046; }
+        button.btn-save-cfg:hover { background-color: #1a6334; }
+        button.btn-retry-failed { background-color: #e67e22; }
+        button.btn-retry-failed:hover { background-color: #d35400; }
+        button.item-retry-btn {
+            background-color: #3b4054;
+            padding: 4px 10px;
+            font-size: 11.5px;
+            border-radius: 4px;
+        }
+        button.item-retry-btn:hover { background-color: #4e5572; }
+        button.download-btn { background-color: #248046; padding: 10px 16px; font-size: 13.5px; }
+        button.download-btn:hover { background-color: #1a6334; }
+
+        /* Dropzone */
+        .dropzone {
+            border: 2px dashed #4e8cff;
+            background-color: rgba(78, 140, 255, 0.04);
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-bottom: 20px;
+        }
+        .dropzone:hover, .dropzone.dragover {
+            background-color: rgba(78, 140, 255, 0.12);
+            border-color: #70a4ff;
+        }
+        .dropzone-text { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+        .dropzone-sub { font-size: 12.5px; color: var(--text-muted); }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--panel-bg);
+            padding: 12px 18px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .save-options {
+            display: flex;
+            gap: 14px;
+            font-size: 13px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .save-options label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        /* Card Header Info */
+        .card-header {
+            display: flex;
+            gap: 18px;
+            background-color: var(--panel-bg);
+            padding: 16px;
+            border-radius: 10px;
+            align-items: center;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+        }
+        .avatar {
+            width: 85px;
+            height: 85px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid var(--border-color);
+            background-color: #111;
+        }
+        .meta-info { flex: 1; min-width: 0; }
+        .char-name {
+            font-size: 20px;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 4px;
+            word-break: break-all;
+        }
+        .char-creator { font-size: 13px; color: var(--text-muted); }
+
+        /* Section Box */
+        .section-box {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section-controls { display: flex; align-items: center; gap: 10px; }
+
+        /* Grid Panes */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        @media (max-width: 768px) {
+            .content-grid { grid-template-columns: 1fr; }
+        }
+
+        .pane {
+            background-color: #141517;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 13.5px;
+            line-height: 1.65;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+        textarea.pane {
+            width: 100%;
+            height: 250px;
+            box-sizing: border-box;
+            resize: vertical;
+            color: var(--trans-text);
+            font-family: inherit;
+            border: 1px solid rgba(87, 242, 135, 0.3);
+        }
+        textarea.pane:focus { outline: none; border-color: var(--trans-text); }
+        .pane-label { font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; }
+
+        .loading { color: var(--warning-color); font-size: 13px; font-weight: normal; }
+        .status-error { color: var(--danger-color) !important; font-weight: 700; }
+        .status-ok { color: var(--success-color) !important; font-weight: 700; }
+        .alt-divider { border-top: 1px dashed var(--border-color); margin: 16px 0; padding-top: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- Header -->
+    <div class="app-header">
+        <h1>
+            <span id="appTitleText">🎭 AI 캐릭터 카드 번역 에디터</span>
+            <span class="header-badge" id="appSubtitleBadge">RisuAI & 실리태번 공용 2.0</span>
+        </h1>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <!-- UI Language Toggle -->
+            <div style="display:flex; background:#111214; border:1px solid var(--border-color); border-radius:8px; padding:2px; font-size:12px;">
+                <button type="button" class="ui-lang-btn active" id="btnUiKo" onclick="setUiLang('ko')" style="padding:4px 8px; font-size:11.5px; background:none; color:var(--text-muted); border-radius:6px;">🇰🇷 KO</button>
+                <button type="button" class="ui-lang-btn" id="btnUiEn" onclick="setUiLang('en')" style="padding:4px 8px; font-size:11.5px; background:none; color:var(--text-muted); border-radius:6px;">🇺🇸 EN</button>
+                <button type="button" class="ui-lang-btn" id="btnUiJa" onclick="setUiLang('ja')" style="padding:4px 8px; font-size:11.5px; background:none; color:var(--text-muted); border-radius:6px;">🇯🇵 JA</button>
+            </div>
+            <div class="security-badge" id="appSecurityBadge">
+            🛡️ 100% 브라우저 로컬 구동 (서버 없음 / 키 유출 0%)
+        </div>
+    </div>
+
+    <!-- API Settings Panel -->
+    <div class="api-panel">
+        <!-- Quick Preset Buttons -->
+        <div class="preset-row">
+            <span class="preset-label" id="lblQuickPresets">⚡ 빠른 엔드포인트 선택:</span>
+            <button type="button" class="preset-btn active" onclick="applyPreset('openrouter')">🌐 OpenRouter (추천/검열없음)</button>
+            <button type="button" class="preset-btn" onclick="applyPreset('deepseek')">⚡ DeepSeek 공식</button>
+            <button type="button" class="preset-btn" onclick="applyPreset('gemini')">🤖 Google Gemini (OpenAI 호환)</button>
+            <button type="button" class="preset-btn" onclick="applyPreset('ollama')">💻 로컬 Ollama (무료/오프라인)</button>
+        </div>
+
+        <div class="api-inputs-grid">
+            <!-- 1. Endpoint -->
+            <div class="input-group">
+                <span class="input-label" id="lblEndpoint">🌐 엔드포인트 (Base URL)</span>
+                <input type="text" id="apiEndpoint" value="https://openrouter.ai/api/v1" placeholder="https://openrouter.ai/api/v1">
+            </div>
+
+            <!-- 2. API Key -->
+            <div class="input-group">
+                <span class="input-label" id="lblApiKey">🔑 API Key</span>
+                <input type="password" id="apiKey" placeholder="sk-or-v1-... 또는 API Key 입력">
+            </div>
+
+            <!-- 3. Model Select + Live Fetch -->
+            <div class="input-group">
+                <span class="input-label" id="lblModel">🤖 사용할 모델 (실시간 동기화)</span>
+                <div class="model-select-wrapper">
+                    <select id="modelSelect" style="font-weight:600;">
+                        <option value="" disabled selected id="modelPlaceholder">👉 [🔄 모델 동기화]를 눌러 실시간 모델 목록을 불러오세요</option>
+                    </select>
+                    <button type="button" class="btn-fetch" id="btnSyncModels" onclick="fetchLiveModels()" title="Sync models from endpoint">
+                        🔄 모델 동기화
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4. Save Button -->
+            <div class="input-group" style="margin-top:auto;">
+                <button type="button" class="btn-save-cfg" id="btnSaveCfg" onclick="saveApiSettings()">💾 설정 저장</button>
+            </div>
+        </div>
+        
+        <!-- Search filter for long model lists -->
+        <div id="modelFilterRow" style="display:block; margin-top:10px;">
+            <input type="text" id="modelFilterInput" placeholder="🔍 불러온 모델 검색... (예: deepseek, free, claude, llama)" oninput="filterModelDropdown()" style="padding:6px 10px; font-size:12px;">
+        </div>
+    </div>
+
+    <!-- Drag & Drop Zone -->
+    <div class="dropzone" id="dropzone">
+        <div class="dropzone-text" id="dropTitle">📁 PNG 캐릭터 카드 또는 JSON 파일을 여기에 드래그하여 열기</div>
+        <div class="dropzone-sub" id="dropSub">RisuAI, SillyTavern, Chub.ai의 모든 V2/V3 카드를 완벽 지원합니다.</div>
+        <input type="file" id="fileInput" accept=".png,.json" style="display:none;">
+    </div>
+
+    <!-- Card Result & Translation Workspace -->
+    <div id="resultArea" style="display: none;">
+        
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="save-options">
+                <div style="display:flex; align-items:center; gap:6px; background:#1e1f22; padding:4px 10px; border-radius:8px; border:1px solid var(--border-color);">
+                    <span style="font-weight:bold; color:var(--openrouter-accent); font-size:13px;" id="lblTargetLang">🌐 번역할 목표 언어:</span>
+                    <select id="targetLangSelect" onchange="onTargetLangChange()" style="width:auto; padding:4px 8px; font-weight:700; color:#57f287; background:#111214;">
+                        <option value="ko" selected>🇰🇷 한국어 (Korean)</option>
+                        <option value="en">🇺🇸 English (영어 / 해외수출용)</option>
+                        <option value="ja">🇯🇵 日本語 (Japanese)</option>
+                        <option value="zh-CN">🇨🇳 简体中文 (Chinese Simplified)</option>
+                        <option value="zh-TW">🇹🇼 繁體中文 (Chinese Traditional)</option>
+                        <option value="es">🇪🇸 Español (Spanish)</option>
+                        <option value="fr">🇫🇷 Français (French)</option>
+                        <option value="de">🇩🇪 Deutsch (German)</option>
+                    </select>
+                </div>
+                <span style="font-weight:bold; color:var(--text-muted); margin-left:8px;" id="lblSaveOpts">💾 저장 옵션:</span>
+                <label><input type="checkbox" id="saveGreetingKo" checked disabled> <span id="optGreetingKo">첫 메시지(번역본 고정)</span></label>
+                <label title="Toggle saving translated lore to card"><input type="checkbox" id="saveDescKo" checked> <span id="optDescKo">설명/성격/배경도 번역본으로 저장</span></label>
+                <label><input type="checkbox" id="saveMesExampleKo" checked> <span id="optMesExKo">대화 예시 번역본 저장</span></label>
+                <label><input type="checkbox" id="chkInjectPrompt" checked> <span id="optInjectPrompt">선택 언어 출력 지침 주입</span></label>
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn-retry-failed" id="btnRetryFailed" onclick="retryFailedOnly()">⚠️ 실패 항목만 재번역</button>
+                <button type="button" id="btnTranslateAll" onclick="translateAllSequential()">🔄 전체 번역 시작</button>
+                <button type="button" class="download-btn" id="btnSavePng" onclick="downloadPNG()">💾 PNG 카드 저장</button>
+                <button type="button" class="download-btn" id="btnSaveJson" onclick="downloadJSON()">📄 JSON 저장</button>
+            </div>
+        </div>
+
+        <!-- Card Header (Avatar + Name) -->
+        <div class="card-header">
+            <img id="charAvatar" class="avatar" src="" alt="Avatar">
+            <div class="meta-info">
+                <div id="charName" class="char-name">이름 없음</div>
+                <div id="charCreator" class="char-creator">제작자: 미상</div>
+            </div>
+        </div>
+
+        <!-- 1. First Message & Alternate Greetings -->
+        <div class="section-box">
+            <div class="section-title">
+                <span>💬 첫 메시지 및 대체 그리팅 (<span id="greetingCount">1</span>개)</span>
+                <span id="statusFirstMes" class="loading"></span>
+            </div>
+            <div id="greetingsContainer"></div>
+        </div>
+
+        <!-- 2. Description -->
+        <div class="section-box">
+            <div class="section-title">
+                <span id="secTitleDesc">📝 캐릭터 설명 (Description)</span>
+                <div class="section-controls">
+                    <span id="statusDesc" class="loading"></span>
+                    <button type="button" class="item-retry-btn" onclick="retrySingleItem('desc')">🔄 이 부분만 번역</button>
+                </div>
+            </div>
+            <div class="content-grid">
+                <div>
+                    <div class="pane-label">원본 영문</div>
+                    <div id="rawDesc" class="pane"></div>
+                </div>
+                <div>
+                    <div class="pane-label">한국어 번역본 (수정 가능)</div>
+                    <textarea id="transDesc" class="pane"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Message Examples -->
+        <div class="section-box">
+            <div class="section-title">
+                <span id="secTitleMesEx">🗣️ 대화 예시 (Message Examples)</span>
+                <div class="section-controls">
+                    <span id="statusMesExample" class="loading"></span>
+                    <button type="button" class="item-retry-btn" onclick="retrySingleItem('mesEx')">🔄 이 부분만 번역</button>
+                </div>
+            </div>
+            <div class="content-grid">
+                <div>
+                    <div class="pane-label">원본 영문</div>
+                    <div id="rawMesExample" class="pane"></div>
+                </div>
+                <div>
+                    <div class="pane-label">한국어 번역본 (수정 가능)</div>
+                    <textarea id="transMesExample" class="pane"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Personality -->
+        <div class="section-box">
+            <div class="section-title">
+                <span id="secTitlePersonality">🧠 성격 (Personality)</span>
+                <div class="section-controls">
+                    <span id="statusPersonality" class="loading"></span>
+                    <button type="button" class="item-retry-btn" onclick="retrySingleItem('personality')">🔄 이 부분만 번역</button>
+                </div>
+            </div>
+            <div class="content-grid">
+                <div>
+                    <div class="pane-label">원본 영문</div>
+                    <div id="rawPersonality" class="pane"></div>
+                </div>
+                <div>
+                    <div class="pane-label">한국어 번역본 (수정 가능)</div>
+                    <textarea id="transPersonality" class="pane"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Scenario -->
+        <div class="section-box">
+            <div class="section-title">
+                <span id="secTitleScenario">🌍 시나리오 및 배경 (Scenario)</span>
+                <div class="section-controls">
+                    <span id="statusScenario" class="loading"></span>
+                    <button type="button" class="item-retry-btn" onclick="retrySingleItem('scenario')">🔄 이 부분만 번역</button>
+                </div>
+            </div>
+            <div class="content-grid">
+                <div>
+                    <div class="pane-label">원본 영문</div>
+                    <div id="rawScenario" class="pane"></div>
+                </div>
+                <div>
+                    <div class="pane-label">한국어 번역본 (수정 가능)</div>
+                    <textarea id="transScenario" class="pane"></textarea>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    
+    const LANG_CONFIGS = {
+        'ko': { name: 'Korean (한국어)', rule: '[System Instruction: Always write responses in fluent and descriptive Korean, maintaining novelistic dialogue/narration styles.]', label: '한국어 번역본' },
+        'en': { name: 'English', rule: '[System Instruction: Always write responses in fluent, descriptive English, maintaining novelistic dialogue/narration styles.]', label: 'English Translation' },
+        'ja': { name: 'Japanese (日本語)', rule: '[System Instruction: Always write responses in fluent and natural Japanese (日本語), maintaining light novel dialogue and narration styles.]', label: '日本語 翻訳' },
+        'zh-CN': { name: 'Simplified Chinese (简体中文)', rule: '[System Instruction: Always write responses in fluent and descriptive Simplified Chinese (简体中文), maintaining novelistic dialogue/narration styles.]', label: '简体中文 翻译' },
+        'zh-TW': { name: 'Traditional Chinese (繁體中文)', rule: '[System Instruction: Always write responses in fluent and descriptive Traditional Chinese (繁體中文), maintaining novelistic dialogue/narration styles.]', label: '繁體中文 翻譯' },
+        'es': { name: 'Spanish (Español)', rule: '[System Instruction: Always write responses in fluent and descriptive Spanish (Español), maintaining novelistic dialogue/narration styles.]', label: 'Traducción al Español' },
+        'fr': { name: 'French (Français)', rule: '[System Instruction: Always write responses in fluent and descriptive French (Français), maintaining novelistic dialogue/narration styles.]', label: 'Traduction en Français' },
+        'de': { name: 'German (Deutsch)', rule: '[System Instruction: Always write responses in fluent and descriptive German (Deutsch), maintaining novelistic dialogue/narration styles.]', label: 'Deutsche Übersetzung' }
+    };
+
+    function getSelectedLanguageConfig() {
+        const sel = document.getElementById('targetLangSelect');
+        const code = sel ? sel.value : 'ko';
+        return LANG_CONFIGS[code] || LANG_CONFIGS['ko'];
+    }
+
+    function onTargetLangChange() {
+        const cfg = getSelectedLanguageConfig();
+        document.querySelectorAll('.pane-label').forEach(el => {
+            if (el.innerText.includes('번역') || el.innerText.includes('Translation') || el.innerText.includes('翻訳')) {
+                el.innerText = `${cfg.label} (수정 가능)`;
+            }
+        });
+    }
+
+    
+    // ==========================================
+    // UI Internationalization (i18n)
+    // ==========================================
+    const UI_TRANSLATIONS = {
+        ko: {
+            title: "🎭 AI 캐릭터 카드 번역 에디터",
+            subtitle_badge: "RisuAI & 실리태번 공용 2.0",
+            security_badge: "🛡️ 100% 브라우저 로컬 구동 (서버 없음 / 키 유출 0%)",
+            quick_presets: "⚡ 빠른 엔드포인트 선택:",
+            preset_openrouter: "🌐 OpenRouter (추천/검열없음)",
+            preset_deepseek: "⚡ DeepSeek 공식",
+            preset_gemini: "🤖 Google Gemini (OpenAI 호환)",
+            preset_ollama: "💻 로컬 Ollama (오프라인/무료)",
+            lbl_endpoint: "🌐 엔드포인트 (Base URL)",
+            lbl_apikey: "🔑 API Key",
+            lbl_model: "🤖 사용할 모델 (실시간 동기화)",
+            model_ph: "👉 [🔄 모델 동기화]를 눌러 실시간 모델 목록을 불러오세요",
+            btn_sync_models: "🔄 모델 동기화",
+            btn_save_cfg: "💾 설정 저장",
+            search_model_ph: "🔍 불러온 모델 검색... (예: deepseek, free, claude, llama)",
+            drop_title: "📁 PNG 캐릭터 카드 또는 JSON 파일을 여기에 드래그하여 열기",
+            drop_sub: "RisuAI, SillyTavern, Chub.ai의 모든 V2/V3 카드를 완벽 지원합니다.",
+            lbl_target_lang: "🌐 번역할 목표 언어:",
+            lbl_save_opts: "💾 저장 옵션:",
+            opt_greeting_ko: "첫 메시지(번역본 고정)",
+            opt_desc_ko: "설명/성격/배경도 번역본으로 저장",
+            opt_mes_ex_ko: "대화 예시 번역본 저장",
+            opt_inject_prompt: "선택 언어 출력 지침 주입",
+            btn_retry_failed: "⚠️ 실패 항목만 재번역",
+            btn_translate_all: "🔄 전체 번역 시작",
+            btn_save_png: "💾 PNG 카드 저장",
+            btn_save_json: "📄 JSON 저장",
+            sec_first_mes: "💬 첫 메시지 및 대체 그리팅",
+            sec_desc: "📝 캐릭터 설명 (Description)",
+            sec_mes_ex: "🗣️ 대화 예시 (Message Examples)",
+            sec_personality: "🧠 성격 (Personality)",
+            sec_scenario: "🌍 시나리오 및 배경 (Scenario)",
+            btn_retry_item: "🔄 이 부분만 번역",
+            raw_label: "원본",
+            trans_label: "번역본 (수정 가능)"
+        },
+        en: {
+            title: "🎭 AI Character Card Translator & Editor",
+            subtitle_badge: "Universal V2/V3 Spec 2.0",
+            security_badge: "🛡️ 100% Client-Side (No server / Zero key leakage)",
+            quick_presets: "⚡ Quick Presets:",
+            preset_openrouter: "🌐 OpenRouter (Uncensored / Rec)",
+            preset_deepseek: "⚡ DeepSeek Official",
+            preset_gemini: "🤖 Google Gemini (OpenAI Compatible)",
+            preset_ollama: "💻 Local Ollama (Free/Offline)",
+            lbl_endpoint: "🌐 Endpoint (Base URL)",
+            lbl_apikey: "🔑 API Key",
+            lbl_model: "🤖 Model (Live Sync)",
+            model_ph: "👉 Click [🔄 Sync Models] to fetch live models",
+            btn_sync_models: "🔄 Sync Models",
+            btn_save_cfg: "💾 Save Config",
+            search_model_ph: "🔍 Search models... (e.g. deepseek, free, claude, llama)",
+            drop_title: "📁 Drag & Drop PNG Character Card or JSON file here",
+            drop_sub: "Fully supports all V2/V3 cards from RisuAI, SillyTavern, Chub.ai, etc.",
+            lbl_target_lang: "🌐 Target Language:",
+            lbl_save_opts: "💾 Save Options:",
+            opt_greeting_ko: "First message (translated)",
+            opt_desc_ko: "Save Desc/Personality/Scenario in target language",
+            opt_mes_ex_ko: "Save Message Examples in target language",
+            opt_inject_prompt: "Inject target language output instruction",
+            btn_retry_failed: "⚠️ Retry Failed Only",
+            btn_translate_all: "🔄 Translate All",
+            btn_save_png: "💾 Save PNG Card",
+            btn_save_json: "📄 Save JSON",
+            sec_first_mes: "💬 First Message & Alternate Greetings",
+            sec_desc: "📝 Character Description",
+            sec_mes_ex: "🗣️ Message Examples",
+            sec_personality: "🧠 Personality",
+            sec_scenario: "🌍 Scenario & Lore",
+            btn_retry_item: "🔄 Translate This Only",
+            raw_label: "Original Text",
+            trans_label: "Translation (Editable)"
+        },
+        ja: {
+            title: "🎭 AIキャラクターカード翻訳エディタ",
+            subtitle_badge: "RisuAI & SillyTavern 共通 2.0",
+            security_badge: "🛡️ 100% クライアント完結 (サーバーなし / キー流出ゼロ)",
+            quick_presets: "⚡ プリセット選択:",
+            preset_openrouter: "🌐 OpenRouter (おすすめ/無検閲)",
+            preset_deepseek: "⚡ DeepSeek 公式",
+            preset_gemini: "🤖 Google Gemini (OpenAI互換)",
+            preset_ollama: "💻 ローカル Ollama (無料/オフライン)",
+            lbl_endpoint: "🌐 エンドポイント (Base URL)",
+            lbl_apikey: "🔑 API Key",
+            lbl_model: "🤖 使用モデル (リアルタイム同期)",
+            model_ph: "👉 [🔄 モデル同期] を押して最新モデル一覧を取得してください",
+            btn_sync_models: "🔄 モデル同期",
+            btn_save_cfg: "💾 設定保存",
+            search_model_ph: "🔍 モデル検索... (例: deepseek, free, claude)",
+            drop_title: "📁 PNGキャラクターカードまたはJSONをここにドラッグ",
+            drop_sub: "RisuAI、SillyTavern、Chub.aiのすべてのV2/V3仕様に対応",
+            lbl_target_lang: "🌐 翻訳先言語:",
+            lbl_save_opts: "💾 保存オプション:",
+            opt_greeting_ko: "最初のメッセージ (翻訳固定)",
+            opt_desc_ko: "説明/性格/シナリオも翻訳版で保存",
+            opt_mes_ex_ko: "対話例も翻訳版で保存",
+            opt_inject_prompt: "選択言語での返答指示を注入",
+            btn_retry_failed: "⚠️ 失敗項目のみ再翻訳",
+            btn_translate_all: "🔄 全体翻訳開始",
+            btn_save_png: "💾 PNGカード保存",
+            btn_save_json: "📄 JSON保存",
+            sec_first_mes: "💬 最初のメッセージ & 代替挨拶",
+            sec_desc: "📝 キャラクター説明 (Description)",
+            sec_mes_ex: "🗣️ 対話例 (Message Examples)",
+            sec_personality: "🧠 性格 (Personality)",
+            sec_scenario: "🌍 シナリオ & 背景 (Scenario)",
+            btn_retry_item: "🔄 この項目のみ翻訳",
+            raw_label: "原文",
+            trans_label: "翻訳結果 (編集可能)"
+        }
+    };
+
+    let currentUiLang = 'ko';
+
+    function initUiLang() {
+        const saved = localStorage.getItem('chara_ui_lang');
+        if (saved && UI_TRANSLATIONS[saved]) {
+            currentUiLang = saved;
+        } else {
+            // Auto detect from browser
+            const nav = (navigator.language || 'en').toLowerCase();
+            if (nav.startsWith('ko')) currentUiLang = 'ko';
+            else if (nav.startsWith('ja')) currentUiLang = 'ja';
+            else currentUiLang = 'en';
+        }
+        applyUiLang(currentUiLang);
+    }
+
+    function setUiLang(lang) {
+        currentUiLang = lang;
+        localStorage.setItem('chara_ui_lang', lang);
+        applyUiLang(lang);
+    }
+
+    function applyUiLang(lang) {
+        const t = UI_TRANSLATIONS[lang] || UI_TRANSLATIONS['en'];
+        
+        // Update switcher buttons
+        document.querySelectorAll('.ui-lang-btn').forEach(b => {
+            b.style.background = 'none';
+            b.style.color = 'var(--text-muted)';
+            b.style.fontWeight = 'normal';
+        });
+        const activeBtn = document.getElementById(lang === 'ko' ? 'btnUiKo' : (lang === 'ja' ? 'btnUiJa' : 'btnUiEn'));
+        if (activeBtn) {
+            activeBtn.style.background = 'var(--accent-color)';
+            activeBtn.style.color = '#ffffff';
+            activeBtn.style.fontWeight = 'bold';
+        }
+
+        // Apply text elements by ID
+        safeSetText('appTitleText', t.title);
+        safeSetText('appSubtitleBadge', t.subtitle_badge);
+        safeSetText('appSecurityBadge', t.security_badge);
+        safeSetText('lblQuickPresets', t.quick_presets);
+        safeSetText('lblEndpoint', t.lbl_endpoint);
+        safeSetText('lblApiKey', t.lbl_apikey);
+        safeSetText('lblModel', t.lbl_model);
+        safeSetText('modelPlaceholder', t.model_ph);
+        safeSetText('btnSyncModels', t.btn_sync_models);
+        safeSetText('btnSaveCfg', t.btn_save_cfg);
+        safeSetPlaceholder('modelFilterInput', t.search_model_ph);
+        safeSetText('dropTitle', t.drop_title);
+        safeSetText('dropSub', t.drop_sub);
+        safeSetText('lblTargetLang', t.lbl_target_lang);
+        safeSetText('lblSaveOpts', t.lbl_save_opts);
+        safeSetText('optGreetingKo', t.opt_greeting_ko);
+        safeSetText('optDescKo', t.opt_desc_ko);
+        safeSetText('optMesExKo', t.opt_mes_ex_ko);
+        safeSetText('optInjectPrompt', t.opt_inject_prompt);
+        safeSetText('btnRetryFailed', t.btn_retry_failed);
+        safeSetText('btnTranslateAll', t.btn_translate_all);
+        safeSetText('btnSavePng', t.btn_save_png);
+        safeSetText('btnSaveJson', t.btn_save_json);
+
+        // Section Titles
+        safeSetText('secTitleDesc', t.sec_desc);
+        safeSetText('secTitleMesEx', t.sec_mes_ex);
+        safeSetText('secTitlePersonality', t.sec_personality);
+        safeSetText('secTitleScenario', t.sec_scenario);
+
+        // Retry Item Buttons
+        document.querySelectorAll('.item-retry-btn').forEach(btn => {
+            if (!btn.innerText.includes('그리팅') && !btn.innerText.includes('Greeting') && !btn.innerText.includes('挨拶')) {
+                btn.innerText = t.btn_retry_item;
+            }
+        });
+    }
+
+    function safeSetText(id, txt) {
+        const el = document.getElementById(id);
+        if (el) el.innerText = txt;
+    }
+    function safeSetPlaceholder(id, txt) {
+        const el = document.getElementById(id);
+        if (el) el.placeholder = txt;
+    }
+
+    let globalCardObj = null;
+    let originalImageBuffer = null;
+    let cachedModelList = [];
+
+    const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+
+    // Preset configurations
+    const PRESETS = {
+        openrouter: {
+            endpoint: 'https://openrouter.ai/api/v1',
+            placeholder: 'sk-or-v1-... (OpenRouter API Key)',
+            defaultModel: 'deepseek/deepseek-chat'
+        },
+        deepseek: {
+            endpoint: 'https://api.deepseek.com/v1',
+            placeholder: 'sk-... (DeepSeek API Key)',
+            defaultModel: 'deepseek-chat'
+        },
+        gemini: {
+            endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai',
+            placeholder: 'AIzaSy... (Google AI Studio Key)',
+            defaultModel: 'gemini-2.0-flash'
+        },
+        ollama: {
+            endpoint: 'http://localhost:11434/v1',
+            placeholder: '로컬은 키 불필요 (비워둠)',
+            defaultModel: 'qwen2.5:latest'
+        }
+    };
+
+    function applyPreset(key) {
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+        if (event && event.target) event.target.classList.add('active');
+
+        const cfg = PRESETS[key];
+        if (!cfg) return;
+        document.getElementById('apiEndpoint').value = cfg.endpoint;
+        document.getElementById('apiKey').placeholder = cfg.placeholder;
+
+        // If default model exists in select, set it
+        const sel = document.getElementById('modelSelect');
+        const exists = Array.from(sel.options).some(o => o.value === cfg.defaultModel);
+        if (!exists) {
+            const opt = document.createElement('option');
+            opt.value = cfg.defaultModel;
+            opt.textContent = `${cfg.defaultModel} (기본값)`;
+            sel.prepend(opt);
+        }
+        sel.value = cfg.defaultModel;
+    }
+
+    // Load and Save Settings
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedEndpoint = localStorage.getItem('chara_api_endpoint');
+        const savedKey = localStorage.getItem('chara_api_key');
+        const savedModel = localStorage.getItem('chara_api_model');
+
+        if (savedEndpoint) document.getElementById('apiEndpoint').value = savedEndpoint;
+        if (savedKey) document.getElementById('apiKey').value = savedKey;
+        // Automatically fetch live models on load
+        fetchLiveModels(true);
+    });
+
+    function saveApiSettings() {
+        const endpoint = document.getElementById('apiEndpoint').value.trim();
+        const key = document.getElementById('apiKey').value.trim();
+        const model = document.getElementById('modelSelect').value;
+
+        localStorage.setItem('chara_api_endpoint', endpoint);
+        localStorage.setItem('chara_api_key', key);
+        localStorage.setItem('chara_api_model', model);
+        alert(`API 설정이 저장되었습니다!\n- 엔드포인트: ${endpoint}\n- 모델: ${model}`);
+    }
+
+    // Live Dynamic Model Fetching from /models API
+    async function fetchLiveModels(isSilent = false) {
+        const endpoint = document.getElementById('apiEndpoint').value.trim() || 'https://openrouter.ai/api/v1';
+        const apiKey = document.getElementById('apiKey').value.trim();
+
+        const cleanUrl = endpoint.replace(/\/+$/, '') + '/models';
+        const btn = document.getElementById('btnSyncModels');
+        if (btn) btn.innerText = '⏳ 동기화 중...';
+
+        try {
+            const headers = { 'Content-Type': 'application/json' };
+            if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+
+            const res = await fetch(cleanUrl, { headers });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+
+            const list = data.data || [];
+            if (!Array.isArray(list) || list.length === 0) {
+                throw new Error('모델 목록이 비어있습니다.');
+            }
+
+            cachedModelList = list;
+            populateModelDropdown(list);
+
+            // Restore previously saved model if still present
+            const savedModel = localStorage.getItem('chara_api_model');
+            const sel = document.getElementById('modelSelect');
+            if (savedModel && Array.from(sel.options).some(o => o.value === savedModel)) {
+                sel.value = savedModel;
+            }
+
+            if (!isSilent) {
+                alert(`🎉 성공! 오픈라우터에서 현재 실시간 서비스 중인 ${list.length}개의 최신 모델을 모두 불러왔습니다.`);
+            }
+        } catch (e) {
+            if (!isSilent) {
+                alert(`모델 동기화 실패: ${e.message}\n(엔드포인트 주소나 인터넷 연결을 확인해주세요)`);
+            }
+        } finally {
+            if (btn) {
+                const t = (typeof UI_TRANSLATIONS !== 'undefined' && UI_TRANSLATIONS[currentUiLang]) ? UI_TRANSLATIONS[currentUiLang].btn_sync_models : '🔄 모델 동기화';
+                btn.innerText = t;
+            }
+        }
+    }
+
+    function populateModelDropdown(list) {
+        const sel = document.getElementById('modelSelect');
+        const current = sel.value;
+        sel.innerHTML = '';
+
+        list.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            const price = m.pricing?.prompt ? ` ($${(parseFloat(m.pricing.prompt)*1000000).toFixed(2)}/1M)` : '';
+            opt.textContent = `${m.name || m.id}${price}`;
+            sel.appendChild(opt);
+        });
+
+        if (Array.from(sel.options).some(o => o.value === current)) {
+            sel.value = current;
+        }
+    }
+
+    function filterModelDropdown() {
+        const q = document.getElementById('modelFilterInput').value.toLowerCase().trim();
+        if (!cachedModelList.length) return;
+        const filtered = cachedModelList.filter(m => 
+            m.id.toLowerCase().includes(q) || (m.name && m.name.toLowerCase().includes(q))
+        );
+        populateModelDropdown(filtered);
+    }
+
+    // OpenAI-Compatible Universal Translation Core
+    async function requestChunkTranslation(chunkText, isProse = false, retryCount = 0) {
+        const endpoint = document.getElementById('apiEndpoint').value.trim() || 'https://openrouter.ai/api/v1';
+        const apiKey = document.getElementById('apiKey').value.trim();
+        const model = document.getElementById('modelSelect').value;
+
+        if (!endpoint) throw new Error('엔드포인트 주소가 없습니다.');
+        if (!model) throw new Error('선택된 모델이 없습니다! 먼저 상단의 [🔄 모델 동기화]를 눌러 사용할 모델을 선택해주세요.');
+        const url = endpoint.replace(/\/+$/, '') + '/chat/completions';
+
+                const langConfig = getSelectedLanguageConfig();
+        const prompt = isProse
+            ? `You are an expert translator specializing in text roleplay, fiction, and character dialogue localization.
+Translate the following source text into natural, fluent, expressive ${langConfig.name}.
+
+[Translation Guidelines]
+1. Tone & Voice: Faithfully preserve the character's personality, nuance, manner of speech, and dialogue style in ${langConfig.name}.
+2. Prose Quality: Avoid robotic literal translations. Write smooth, immersive, novelistic prose suited for ${langConfig.name} readers.
+3. Strict Tag Preservation: You MUST keep all system tokens, tags, and formatting intact (e.g. {{user}}, {{char}}, <START>, quotes "...", asterisks *...*).
+4. Output ONLY the translated result text. Do NOT add any introductory or concluding notes.
+
+Source:
+${chunkText}`
+            : `Translate the following character attribute/setting text into natural, fluent ${langConfig.name}.
+
+[Guidelines]
+1. Preserve all key=(value) formatting, <START>, {{user}}, {{char}} and other system markup exactly.
+2. Translate descriptions and lore naturally to convey the character's charm in ${langConfig.name}.
+3. Output ONLY the translated text.
+
+Source:
+${chunkText}`;
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://chara-trans.netlify.app',
+            'X-Title': 'RisuAI Character Card Translator'
+        };
+        if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'You are an expert translator specializing in creative writing, text roleplay, and fiction localizations. You faithfully preserve tone, novelistic prose, character personality, and all system markup tags.'
+                    },
+                    { role: 'user', content: prompt }
+                ],
+                temperature: 0.2
+            })
+        });
+
+        if (res.status === 429 && retryCount < 3) {
+            await sleep(5000);
+            return await requestChunkTranslation(chunkText, isProse, retryCount + 1);
+        }
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error?.message || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        const content = data.choices?.[0]?.message?.content;
+        if (!content) throw new Error('응답 텍스트가 비어있습니다.');
+        return content.trim();
+    }
+
+    async function translateTextSmart(text, isProse = false) {
+        if (!text || text.trim() === '') return '';
+        if (isProse || text.length < 1000) {
+            return await requestChunkTranslation(text, isProse);
+        }
+
+        const lines = text.split('\n');
+        const chunks = [];
+        let cur = '';
+        for (const line of lines) {
+            if ((cur + '\n' + line).length > 900) {
+                if (cur) chunks.push(cur);
+                cur = line;
+            } else {
+                cur = cur ? (cur + '\n' + line) : line;
+            }
+        }
+        if (cur) chunks.push(cur);
+
+        const results = [];
+        for (const ch of chunks) {
+            if (ch.trim() !== '') {
+                const tr = await requestChunkTranslation(ch, false);
+                results.push(tr);
+                await sleep(400);
+            } else {
+                results.push('');
+            }
+        }
+        return results.join('\n');
+    }
+
+    // Drag & Drop / File Handling
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
+    function extractDataFromPNG(arrayBuffer) {
+        const uint8 = new Uint8Array(arrayBuffer);
+        let offset = 8;
+        while (offset < uint8.length) {
+            const length = (uint8[offset] << 24) | (uint8[offset+1] << 16) | (uint8[offset+2] << 8) | uint8[offset+3];
+            const type = String.fromCharCode(...uint8.slice(offset+4, offset+8));
+            if (type === 'tEXt') {
+                const chunkData = uint8.slice(offset+8, offset+8+length);
+                const nullIdx = chunkData.indexOf(0);
+                const keyword = new TextDecoder().decode(chunkData.slice(0, nullIdx));
+                if (keyword === 'chara' || keyword === 'ccv3') {
+                    const text = new TextDecoder().decode(chunkData.slice(nullIdx + 1));
+                    const decoded = atob(text);
+                    const bytes = Uint8Array.from(decoded, c => c.charCodeAt(0));
+                    return JSON.parse(new TextDecoder('utf-8').decode(bytes));
+                }
+            }
+            offset += 12 + length;
+        }
+        return null;
+    }
+
+    async function handleFile(file) {
+        const reader = new FileReader();
+        if (file.name.toLowerCase().endsWith('.png')) {
+            reader.onload = function(e) {
+                originalImageBuffer = e.target.result;
+                try {
+                    globalCardObj = extractDataFromPNG(e.target.result);
+                    if (!globalCardObj) {
+                        alert('캐릭터 카드 메타데이터(chara)를 찾을 수 없습니다.');
+                        return;
+                    }
+                    initDisplay(URL.createObjectURL(file));
+                } catch (err) {
+                    alert('카드 파싱 실패: 유효하지 않은 카드 포맷');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        } else if (file.name.toLowerCase().endsWith('.json')) {
+            reader.onload = function(e) {
+                originalImageBuffer = null;
+                try {
+                    globalCardObj = JSON.parse(e.target.result);
+                    initDisplay('');
+                } catch (err) {
+                    alert('유효하지 않은 JSON 파일입니다.');
+                }
+            };
+            reader.readAsText(file);
+        }
+    }
+
+    function initDisplay(avatarUrl) {
+        document.getElementById('resultArea').style.display = 'block';
+        const d = globalCardObj.data || globalCardObj;
+
+        const avatarEl = document.getElementById('charAvatar');
+        if (avatarUrl) {
+            avatarEl.src = avatarUrl;
+            avatarEl.style.display = 'block';
+        } else {
+            avatarEl.style.display = 'none';
+        }
+
+        document.getElementById('charName').innerText = d.name || '이름 없음';
+        document.getElementById('charCreator').innerText = `제작자: ${d.creator || d.creator_notes || '미상'}`;
+
+        renderGreetingsUI(d);
+
+        const mesEx = d.mes_example || d.mes_examples || '';
+        document.getElementById('rawMesExample').innerText = mesEx || '(내용 없음)';
+        document.getElementById('transMesExample').value = mesEx ? '번역 대기 중...' : '';
+
+        document.getElementById('rawDesc').innerText = d.description || '(내용 없음)';
+        document.getElementById('transDesc').value = d.description ? '번역 대기 중...' : '';
+
+        document.getElementById('rawPersonality').innerText = d.personality || '(내용 없음)';
+        document.getElementById('transPersonality').value = d.personality ? '번역 대기 중...' : '';
+
+        document.getElementById('rawScenario').innerText = d.scenario || '(내용 없음)';
+        document.getElementById('transScenario').value = d.scenario ? '번역 대기 중...' : '';
+    }
+
+    function renderGreetingsUI(d) {
+        const container = document.getElementById('greetingsContainer');
+        container.innerHTML = '';
+
+        const list = [];
+        const mainMes = d.first_mes || d.greeting || '';
+        if (mainMes) list.push({ title: '기본 첫 메시지 (Main Greeting)', text: mainMes, isMain: true, index: 0 });
+
+        if (Array.isArray(d.alternate_greetings)) {
+            d.alternate_greetings.forEach((alt, idx) => {
+                if (alt && alt.trim() !== '') {
+                    list.push({ title: `대체 그리팅 #${idx + 1} (Alternate Greeting)`, text: alt, isMain: false, index: idx });
+                }
+            });
+        }
+
+        document.getElementById('greetingCount').innerText = list.length;
+
+        list.forEach((item, i) => {
+            const wrap = document.createElement('div');
+            if (i > 0) wrap.className = 'alt-divider';
+
+            wrap.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-weight:bold; color:var(--openrouter-accent); font-size:13px;">📌 ${item.title}</span>
+                    <button type="button" class="item-retry-btn" onclick="retrySingleGreeting(${i})">🔄 이 그리팅만 번역</button>
+                </div>
+                <div class="content-grid">
+                    <div>
+                        <div class="pane-label">원본 영문</div>
+                        <div class="pane" id="raw_greeting_${i}">${escapeHtml(item.text)}</div>
+                    </div>
+                    <div>
+                        <div class="pane-label">한국어 번역본 (수정 가능)</div>
+                        <textarea class="pane greeting-trans-input" data-ismain="${item.isMain}" data-index="${item.index}" id="trans_greeting_${i}">번역 대기 중...</textarea>
+                    </div>
+                </div>
+            `;
+            container.appendChild(wrap);
+        });
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    async function retrySingleGreeting(index) {
+        const rawEl = document.getElementById(`raw_greeting_${index}`);
+        const ta = document.getElementById(`trans_greeting_${index}`);
+        const rawText = rawEl ? rawEl.innerText : '';
+        if (!rawText) return;
+
+        ta.value = '⏳ 자연스러운 문체로 번역 중...';
+        try {
+            const res = await translateTextSmart(rawText, true);
+            ta.value = res;
+        } catch (e) {
+            ta.value = `[번역 실패: ${e.message}]`;
+        }
+    }
+
+    async function retrySingleItem(type) {
+        let rawId, transId, statusId, isProse = false;
+        if (type === 'desc') { rawId = 'rawDesc'; transId = 'transDesc'; statusId = 'statusDesc'; }
+        else if (type === 'mesEx') { rawId = 'rawMesExample'; transId = 'transMesExample'; statusId = 'statusMesExample'; isProse = true; }
+        else if (type === 'personality') { rawId = 'rawPersonality'; transId = 'transPersonality'; statusId = 'statusPersonality'; }
+        else if (type === 'scenario') { rawId = 'rawScenario'; transId = 'transScenario'; statusId = 'statusScenario'; }
+
+        const rawText = document.getElementById(rawId).innerText;
+        const ta = document.getElementById(transId);
+        const st = document.getElementById(statusId);
+
+        if (!rawText || rawText === '(내용 없음)') return;
+
+        st.className = 'loading';
+        st.innerText = '⏳ 번역 중...';
+        ta.value = '⏳ 자연스러운 문체로 번역 중...';
+
+        try {
+            const res = await translateTextSmart(rawText, isProse);
+            ta.value = res;
+            st.className = 'loading status-ok';
+            st.innerText = '✓ 완료';
+        } catch (e) {
+            ta.value = `[번역 실패: ${e.message}]`;
+            st.className = 'loading status-error';
+            st.innerText = '✗ 실패';
+        }
+    }
+
+    async function retryFailedOnly() {
+        const textareas = document.querySelectorAll('.greeting-trans-input');
+        for (let i = 0; i < textareas.length; i++) {
+            const ta = textareas[i];
+            if (ta.value.startsWith('[번역 실패') || ta.value === '번역 대기 중...') {
+                await retrySingleGreeting(i);
+                await sleep(400);
+            }
+        }
+
+        const items = [
+            { id: 'transDesc', type: 'desc' },
+            { id: 'transMesExample', type: 'mesEx' },
+            { id: 'transPersonality', type: 'personality' },
+            { id: 'transScenario', type: 'scenario' }
+        ];
+
+        for (const item of items) {
+            const el = document.getElementById(item.id);
+            if (el.value.startsWith('[번역 실패') || el.value === '번역 대기 중...') {
+                await retrySingleItem(item.type);
+                await sleep(400);
+            }
+        }
+    }
+
+    async function translateAllSequential() {
+        const d = globalCardObj.data || globalCardObj;
+
+        document.querySelectorAll('.loading').forEach(el => {
+            el.className = 'loading';
+            el.innerText = '대기 중';
+        });
+
+        const textareas = document.querySelectorAll('.greeting-trans-input');
+        let anyFail = false;
+        for (let i = 0; i < textareas.length; i++) {
+            const ta = textareas[i];
+            const rawEl = document.getElementById(`raw_greeting_${i}`);
+            const rawText = rawEl ? rawEl.innerText : '';
+            
+            if (rawText && rawText !== '(내용 없음)') {
+                document.getElementById('statusFirstMes').innerText = `⏳ 번역 중 (${i+1}/${textareas.length})...`;
+                try {
+                    const res = await translateTextSmart(rawText, true);
+                    ta.value = res;
+                } catch (e) {
+                    ta.value = `[번역 실패: ${e.message}]`;
+                    anyFail = true;
+                }
+                await sleep(400);
+            }
+        }
+        const stFirst = document.getElementById('statusFirstMes');
+        stFirst.className = anyFail ? 'loading status-error' : 'loading status-ok';
+        stFirst.innerText = anyFail ? '✗ 일부 실패' : '✓ 완료';
+
+        if (d.description && d.description.trim() !== '') {
+            await retrySingleItem('desc');
+            await sleep(400);
+        }
+        if (d.mes_example || d.mes_examples) {
+            await retrySingleItem('mesEx');
+            await sleep(400);
+        }
+        if (d.personality && d.personality.trim() !== '') {
+            await retrySingleItem('personality');
+            await sleep(400);
+        }
+        if (d.scenario && d.scenario.trim() !== '') {
+            await retrySingleItem('scenario');
+        }
+    }
+
+    // Save & Download Logic (CRC32 & Chunk Injection)
+    function getUpdatedCardData() {
+        const clone = JSON.parse(JSON.stringify(globalCardObj));
+        const target = clone.data ? clone.data : clone;
+        const originalData = globalCardObj.data ? globalCardObj.data : globalCardObj;
+
+        const textareas = document.querySelectorAll('.greeting-trans-input');
+        textareas.forEach(ta => {
+            const isMain = ta.dataset.ismain === 'true';
+            const idx = parseInt(ta.dataset.index, 10);
+            if (isMain) {
+                target.first_mes = ta.value;
+                if (target.greeting) target.greeting = ta.value;
+            } else {
+                if (Array.isArray(target.alternate_greetings)) {
+                    target.alternate_greetings[idx] = ta.value;
+                }
+            }
+        });
+
+        if (document.getElementById('saveMesExampleKo').checked) {
+            target.mes_example = document.getElementById('transMesExample').value;
+            if (target.mes_examples) target.mes_examples = document.getElementById('transMesExample').value;
+        } else {
+            target.mes_example = originalData.mes_example || '';
+        }
+
+        if (document.getElementById('saveDescKo').checked) {
+            target.description = document.getElementById('transDesc').value;
+            target.personality = document.getElementById('transPersonality').value;
+            target.scenario = document.getElementById('transScenario').value;
+        } else {
+            target.description = originalData.description || '';
+            target.personality = originalData.personality || '';
+            target.scenario = originalData.scenario || '';
+        }
+
+        if (document.getElementById('chkInjectPrompt').checked) {
+            const langCfg = getSelectedLanguageConfig();
+            const injectRule = langCfg.rule;
+            if (!target.system_prompt) target.system_prompt = "";
+            if (!target.system_prompt.includes(injectRule)) {
+                target.system_prompt = (target.system_prompt ? target.system_prompt + "\n\n" : "") + injectRule;
+            }
+        }
+
+        return clone;
+    }
+
+    function downloadJSON() {
+        const data = getUpdatedCardData();
+        const jsonStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const langCode = (document.getElementById('targetLangSelect')?.value || 'ko').toUpperCase(); const name = (data.data?.name || data.name || 'character') + '_' + langCode + '.json';
+        saveBlob(blob, name);
+    }
+
+    function downloadPNG() {
+        if (!originalImageBuffer) {
+            alert('원본이 PNG 카드가 아닙니다. JSON 다운로드를 이용해주세요.');
+            return;
+        }
+        const updatedData = getUpdatedCardData();
+        const jsonString = JSON.stringify(updatedData);
+        
+        const utf8Bytes = new TextEncoder().encode(jsonString);
+        let binary = '';
+        for (let i = 0; i < utf8Bytes.length; i++) {
+            binary += String.fromCharCode(utf8Bytes[i]);
+        }
+        const base64Data = btoa(binary);
+
+        const newPngBuffer = injectChunkToPNG(originalImageBuffer, 'chara', base64Data);
+        const blob = new Blob([newPngBuffer], { type: 'image/png' });
+        const langCode = (document.getElementById('targetLangSelect')?.value || 'ko').toUpperCase(); const name = (updatedData.data?.name || updatedData.name || 'character') + '_' + langCode + '.png';
+        saveBlob(blob, name);
+    }
+
+    function saveBlob(blob, filename) {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+    }
+
+    function injectChunkToPNG(buffer, keyword, text) {
+        const uint8 = new Uint8Array(buffer);
+        const insertPos = 33;
+
+        const keyBytes = new TextEncoder().encode(keyword);
+        const textBytes = new TextEncoder().encode(text);
+        const chunkData = new Uint8Array(keyBytes.length + 1 + textBytes.length);
+        chunkData.set(keyBytes, 0);
+        chunkData[keyBytes.length] = 0;
+        chunkData.set(textBytes, keyBytes.length + 1);
+
+        const length = chunkData.length;
+        const type = [116, 69, 88, 116]; // 'tEXt'
+        
+        const typeAndData = new Uint8Array(4 + length);
+        typeAndData.set(type, 0);
+        typeAndData.set(chunkData, 4);
+        const crc = crc32(typeAndData);
+
+        const fullChunk = new Uint8Array(8 + length + 4);
+        fullChunk[0] = (length >> 24) & 0xff;
+        fullChunk[1] = (length >> 16) & 0xff;
+        fullChunk[2] = (length >> 8) & 0xff;
+        fullChunk[3] = length & 0xff;
+        fullChunk.set(typeAndData, 4);
+        fullChunk[8 + length] = (crc >> 24) & 0xff;
+        fullChunk[8 + length + 1] = (crc >> 16) & 0xff;
+        fullChunk[8 + length + 2] = (crc >> 8) & 0xff;
+        fullChunk[8 + length + 3] = crc & 0xff;
+
+        const out = new Uint8Array(uint8.length + fullChunk.length);
+        out.set(uint8.slice(0, insertPos), 0);
+        out.set(fullChunk, insertPos);
+        out.set(uint8.slice(insertPos), insertPos + fullChunk.length);
+        return out.buffer;
+    }
+
+    function crc32(buf) {
+        let table = [];
+        for (let i = 0; i < 256; i++) {
+            let c = i;
+            for (let k = 0; k < 8; k++) {
+                c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+            }
+            table[i] = c;
+        }
+        let crc = 0 ^ (-1);
+        for (let i = 0; i < buf.length; i++) {
+            crc = (crc >>> 8) ^ table[(crc ^ buf[i]) & 0xFF];
+        }
+        return (crc ^ (-1)) >>> 0;
+    }
+</script>
+
+</body>
+</html>
