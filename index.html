@@ -1216,17 +1216,101 @@
         }
     }
 
+    const PROVIDER_NAMES = {
+        'deepseek': '🤖 DeepSeek (딥시크)',
+        'google': '🌐 Google (구글 Gemini)',
+        'openai': '⚡ OpenAI (오픈AI)',
+        'anthropic': '🧠 Anthropic (앤트로픽 클로드)',
+        'meta-llama': '🦙 Meta (메타 Llama)',
+        'qwen': '🐉 Qwen (알리바바 큐웬)',
+        'mistralai': '🌪️ Mistral (미스트랄)',
+        'gryphe': '🎭 Gryphe (RP 롤플레잉 특화)',
+        'nousresearch': '🏛️ Nous Research',
+        'x-ai': '🚀 xAI (Grok)',
+        'cohere': '🌲 Cohere (코히어)',
+        'microsoft': '🪟 Microsoft (마이크로소프트)'
+    };
+
+    const PROVIDER_ORDER = [
+        'deepseek',
+        'google',
+        'openai',
+        'anthropic',
+        'meta-llama',
+        'qwen',
+        'mistralai',
+        'gryphe',
+        'nousresearch',
+        'x-ai',
+        'cohere',
+        'microsoft'
+    ];
+
+    function getModelProvider(id) {
+        if (id.includes('/')) {
+            return id.split('/')[0].toLowerCase();
+        }
+        const lower = id.toLowerCase();
+        if (lower.startsWith('deepseek')) return 'deepseek';
+        if (lower.startsWith('gemini')) return 'google';
+        if (lower.startsWith('gpt') || lower.startsWith('o1') || lower.startsWith('o3')) return 'openai';
+        if (lower.startsWith('claude')) return 'anthropic';
+        if (lower.startsWith('llama')) return 'meta-llama';
+        if (lower.startsWith('qwen')) return 'qwen';
+        if (lower.startsWith('mistral')) return 'mistralai';
+        return 'other';
+    }
+
     function populateModelDropdown(list) {
         const sel = document.getElementById('modelSelect');
         const current = sel.value;
         sel.innerHTML = '';
 
+        if (!list || list.length === 0) {
+            const emptyOpt = document.createElement('option');
+            emptyOpt.value = '';
+            emptyOpt.textContent = '검색된 모델이 없습니다.';
+            sel.appendChild(emptyOpt);
+            return;
+        }
+
+        // Group models by company/provider
+        const groups = {};
         list.forEach(m => {
-            const opt = document.createElement('option');
-            opt.value = m.id;
-            const price = m.pricing?.prompt ? ` ($${(parseFloat(m.pricing.prompt)*1000000).toFixed(2)}/1M)` : '';
-            opt.textContent = `${m.name || m.id}${price}`;
-            sel.appendChild(opt);
+            const prov = getModelProvider(m.id);
+            if (!groups[prov]) groups[prov] = [];
+            groups[prov].push(m);
+        });
+
+        // Determine group ordering
+        const orderedKeys = [];
+        PROVIDER_ORDER.forEach(k => {
+            if (groups[k] && groups[k].length > 0) orderedKeys.push(k);
+        });
+        Object.keys(groups).forEach(k => {
+            if (!orderedKeys.includes(k) && k !== 'other') orderedKeys.push(k);
+        });
+        if (groups['other'] && groups['other'].length > 0) {
+            orderedKeys.push('other');
+        }
+
+        // Populate with optgroups
+        orderedKeys.forEach(k => {
+            const grp = document.createElement('optgroup');
+            const label = PROVIDER_NAMES[k] || `📦 ${k.toUpperCase()}`;
+            grp.label = `${label} (${groups[k].length}개)`;
+
+            // Sort models within company alphabetically
+            groups[k].sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id));
+
+            groups[k].forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                const price = m.pricing?.prompt ? ` ($${(parseFloat(m.pricing.prompt)*1000000).toFixed(2)}/1M)` : '';
+                opt.textContent = `${m.name || m.id}${price}`;
+                grp.appendChild(opt);
+            });
+            sel.appendChild(grp);
         });
 
         if (Array.from(sel.options).some(o => o.value === current)) {
