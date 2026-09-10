@@ -1181,9 +1181,9 @@
             defaultModel: 'deepseek-chat'
         },
         gemini: {
-            endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai',
+            endpoint: 'https://generativelanguage.googleapis.com/v1beta',
             placeholder: 'AIzaSy... (Google AI Studio Key)',
-            defaultModel: 'gemini-3.5-flash-lite'
+            defaultModel: 'gemini-2.5-flash'
         },
         ollama: {
             endpoint: 'http://localhost:11434/v1',
@@ -1193,19 +1193,29 @@
     };
 
     const GEMINI_MODELS = [
+        // ⚡ Flash (고속 표준 번역 - 추천)
+        { id: 'gemini-2.5-flash', name: '⚡ gemini-2.5-flash (Google 최신 주력 플래시 ⚡)', group: '⚡ Flash (고속 표준 번역)' },
+        { id: 'gemini-2.0-flash', name: '🚀 gemini-2.0-flash (초고속 실시간)', group: '⚡ Flash (고속 표준 번역)' },
+        { id: 'gemini-1.5-flash', name: '🚀 gemini-1.5-flash (안정적 롱컨텍스트)', group: '⚡ Flash (고속 표준 번역)' },
+        { id: 'gemini-3.5-flash', name: '🚀 gemini-3.5-flash (고효율 플래시)', group: '⚡ Flash (고속 표준 번역)' },
+        { id: 'gemini-3.7-flash', name: '🚀 gemini-3.7-flash (워크호스 플래시)', group: '⚡ Flash (고속 표준 번역)' },
+        { id: 'gemini-3.8-flash', name: '🚀 gemini-3.8-flash (초고속 플래시)', group: '⚡ Flash (고속 표준 번역)' },
+
         // ⚡ Flash-Lite (초경량 / 극가성비 / 최고 속도 번역)
-        { id: 'gemini-3.5-flash-lite', name: '⚡ gemini-3.5-flash-lite (3.5 플래시 라이트 ⚡)', group: '⚡ Flash-Lite (초경량 / 극가성비)' },
+        { id: 'gemini-3.5-flash-lite', name: '⚡ gemini-3.5-flash-lite (3.5 플래시 라이트)', group: '⚡ Flash-Lite (초경량 / 극가성비)' },
         { id: 'gemini-3.1-flash-lite', name: '⚡ gemini-3.1-flash-lite (3.1 플래시 라이트)', group: '⚡ Flash-Lite (초경량 / 극가성비)' },
         { id: 'gemini-3.8-flash-lite', name: '⚡ gemini-3.8-flash-lite (3.8 플래시 라이트)', group: '⚡ Flash-Lite (초경량 / 극가성비)' },
 
-        // 🚀 Flash (고속 표준 번역)
-        { id: 'gemini-3.8-flash', name: '🚀 gemini-3.8-flash (최신 시즌 초고속 플래시 🚀)', group: '🚀 Flash (고속 표준 번역)' },
-        { id: 'gemini-3.7-flash', name: '🚀 gemini-3.7-flash (현행 주력 워크호스)', group: '🚀 Flash (고속 표준 번역)' },
-        { id: 'gemini-3.5-flash', name: '🚀 gemini-3.5-flash (고효율 플래시)', group: '🚀 Flash (고속 표준 번역)' },
-
         // 🧠 Pro (고지능 심층 번역)
-        { id: 'gemini-3.1-pro', name: '🧠 gemini-3.1-pro (플래그십 심층 추론 🧠)', group: '🧠 Pro (고지능 심층 번역)' }
+        { id: 'gemini-2.5-pro', name: '🧠 gemini-2.5-pro (차세대 플래그십 심층 추론 🧠)', group: '🧠 Pro (고지능 심층 번역)' },
+        { id: 'gemini-1.5-pro', name: '🧠 gemini-1.5-pro (플래그십 심층 추론)', group: '🧠 Pro (고지능 심층 번역)' },
+        { id: 'gemini-3.1-pro', name: '🧠 gemini-3.1-pro (플래그십 심층 추론)', group: '🧠 Pro (고지능 심층 번역)' }
     ];
+
+    function isGoogleAiStudio(ep) {
+        const endpoint = (ep || document.getElementById('apiEndpoint')?.value || '').toLowerCase();
+        return endpoint.includes('generativelanguage.googleapis.com');
+    }
 
     function isGeminiActive() {
         const endpoint = (document.getElementById('apiEndpoint')?.value || '').toLowerCase();
@@ -1343,7 +1353,14 @@
         const savedModel = localStorage.getItem('chara_api_model');
         const rememberKey = localStorage.getItem('chara_remember_key');
 
-        if (savedEndpoint) document.getElementById('apiEndpoint').value = savedEndpoint;
+        if (savedEndpoint) {
+            if (savedEndpoint.includes('generativelanguage.googleapis.com/v1beta/openai')) {
+                document.getElementById('apiEndpoint').value = 'https://generativelanguage.googleapis.com/v1beta';
+                localStorage.setItem('chara_api_endpoint', 'https://generativelanguage.googleapis.com/v1beta');
+            } else {
+                document.getElementById('apiEndpoint').value = savedEndpoint;
+            }
+        }
         if (savedKey) document.getElementById('apiKey').value = savedKey;
         if (rememberKey !== null) {
             const chk = document.getElementById('chkRememberKey');
@@ -1421,6 +1438,47 @@
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
         try {
+            // 1. Google Gemini Native Models Sync
+            if (isGoogleAiStudio(endpoint)) {
+                if (!apiKey) throw new Error('Google AI Studio API 키를 먼저 입력해주세요.');
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`;
+                const res = await fetch(geminiUrl, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error?.message || `HTTP ${res.status}`);
+                }
+                const data = await res.json();
+                const rawList = data.models || [];
+                const list = rawList
+                    .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+                    .filter(m => (m.name || '').toLowerCase().includes('gemini'))
+                    .map(m => {
+                        const cleanId = m.name.replace(/^models\//, '');
+                        const dName = m.displayName || cleanId;
+                        return {
+                            id: cleanId,
+                            name: `🌐 ${dName} (${cleanId})`,
+                            group: '🌐 Google Gemini Live Models'
+                        };
+                    });
+                if (!list.length) throw new Error('사용 가능한 Gemini 모델을 찾을 수 없습니다.');
+                cachedModelList = list;
+                populateModelDropdown(list);
+
+                const savedModel = localStorage.getItem('chara_api_model');
+                const sel = document.getElementById('modelSelect');
+                if (savedModel && Array.from(sel.options).some(o => o.value === savedModel)) {
+                    sel.value = savedModel;
+                }
+                updateSpeedModeIndicator();
+                if (!isSilent) {
+                    showToast(`🎉 최신 Gemini 모델 ${list.length}개를 성공적으로 동기화했습니다!`);
+                }
+                return;
+            }
+
+            // 2. OpenAI-compatible /models endpoint
             const headers = { 'Content-Type': 'application/json' };
             if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
 
@@ -1601,18 +1659,35 @@
         populateModelDropdown(filtered);
     }
 
-    // OpenAI-Compatible Universal Translation Core
-    async function requestChunkTranslation(chunkText, isProse = false, retryCount = 0, onTick = null) {
-        const endpoint = document.getElementById('apiEndpoint').value.trim() || 'https://openrouter.ai/api/v1';
-        const apiKey = document.getElementById('apiKey').value.trim();
-        const model = document.getElementById('modelSelect').value;
-
-        if (!endpoint) throw new Error('엔드포인트 주소가 없습니다.');
-        if (!model) throw new Error('선택된 모델이 없습니다! 먼저 상단의 [🔄 모델 동기화]를 눌러 사용할 모델을 선택해주세요.');
-        const url = endpoint.replace(/\/+$/, '') + '/chat/completions';
-
+    function buildTranslationPrompt(chunkText, isProse = false) {
         const langConfig = getSelectedLanguageConfig();
-        const prompt = isProse
+        if (langConfig.code === 'ko') {
+            return isProse
+                ? `당신은 텍스트 롤플레잉 및 소설 번역 전문가입니다. 다음 영문 텍스트를 문맥과 캐릭터성을 온전히 살려 자연스러운 한국어로 번역하세요.
+
+[번역 지침]
+1. 문맥과 말투 일치: 등장인물들의 성격, 말투, 대화 톤(존댓말/반말/격식/속어 등)을 원문의 분위기에 맞게 자연스럽게 표현하세요.
+2. 기계 번역투 다듬기: 
+   - 대사 안에서 기계적인 '너', '네가' 남발을 피하고 한국어 대화 호흡에 맞게 자연스럽게 다듬으세요.
+   - 영어식 직역 비유나 부자연스러운 어순을 부드러운 한국어 문장으로 다듬으세요.
+   - 지문(서술)에서는 상황에 따라 자연스럽게 대명사나 주어를 사용하세요.
+3. 태그 및 형식 보존: {{user}}, {{char}}, <START>, 따옴표("..."), 별표(*...*)는 위치와 형식을 그대로 유지하세요.
+4. 오직 번역된 결과 텍스트만 출력하세요.
+
+원문:
+${chunkText}`
+                : `다음 캐릭터 속성 텍스트를 자연스러운 한국어로 번역하세요.
+
+[번역 지침]
+1. key=(value) 형식, <START>, {{user}}, {{char}} 등의 시스템 태그 형식을 훼손하지 마세요.
+2. 괄호 안의 설명문과 배경은 캐릭터의 매력이 드러나도록 자연스럽게 번역하세요.
+3. 오직 번역된 결과물만 출력하세요.
+
+원문:
+${chunkText}`;
+        }
+
+        return isProse
             ? `You are an expert translator specializing in text roleplay, fiction, and character dialogue localization.
 Translate the following source text into natural, fluent, expressive ${langConfig.name}.
 
@@ -1633,12 +1708,146 @@ ${chunkText}`
 
 Source:
 ${chunkText}`;
+    }
 
-        const headers = {
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://chara-trans.netlify.app',
-            'X-Title': 'RisuAI Character Card Translator'
-        };
+    function buildKeywordsPrompt(keywordsText) {
+        const langConfig = getSelectedLanguageConfig();
+        if (langConfig.code === 'ko') {
+            return `당신은 캐릭터 카드 및 세계관 키워드 번역 전문가입니다. 다음 쉼표로 구분된 키워드들을 자연스러운 한국어로 번역하세요.
+
+[번역 지침]
+1. 각 키워드를 대화 트리거로 적절하게 자연스럽게 한국어로 번역하세요.
+2. 형식: 쉼표(,)로 구분된 키워드 목록으로만 출력하세요 (예: "키워드1, 키워드2, 키워드3").
+3. 판타지 고유명사, 지명, 직위, 세력명 등을 문맥에 맞게 번역하세요.
+4. 오직 쉼표로 구분된 번역 결과만 출력하고, 서두나 추가 설명, 따옴표, 불렛 기호 등을 일절 붙이지 마세요.
+
+원문 키워드:
+${keywordsText}`;
+        }
+
+        return `You are a professional localization translator specializing in character cards, lorebooks, and world info triggers.
+Translate the following comma-separated keywords into natural, accurate ${langConfig.name}.
+
+[Translation Guidelines]
+1. Translate each keyword accurately so that text roleplay chat triggers match the target language (${langConfig.name}).
+2. Format: Return the translated keywords separated by commas (e.g. "keyword 1, keyword 2, keyword 3").
+3. Faithfully localize fantasy terms, location names, factions, and character titles.
+4. Output ONLY the comma-separated list of translated keywords. Do NOT add notes, bullet points, numbers, or quotes.
+
+Source Keywords:
+${keywordsText}`;
+    }
+
+    // Google Gemini Native Direct REST API (CORS-safe & BLOCK_NONE)
+    async function requestGeminiNative(promptText, apiKey, model, retryCount = 0, onTick = null) {
+        if (!apiKey) throw new Error('Google AI Studio API 키가 입력되지 않았습니다.');
+        const cleanModel = (model || 'gemini-2.5-flash').replace(/^models\//, '');
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+        const timeoutSec = 90;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutSec * 1000);
+
+        let elapsed = 0;
+        if (onTick) onTick(elapsed);
+        const timer = setInterval(() => {
+            elapsed++;
+            if (onTick) onTick(elapsed);
+        }, 1000);
+
+        let res;
+        try {
+            res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-goog-api-key': apiKey
+                },
+                signal: controller.signal,
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: promptText }] }],
+                    safetySettings: [
+                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_CIVIC_INTEGRITY", threshold: "BLOCK_NONE" }
+                    ],
+                    generationConfig: { temperature: 0.2 }
+                })
+            });
+
+            if (res.status === 429 && retryCount < 3) {
+                clearInterval(timer);
+                clearTimeout(timeoutId);
+                const errData = await res.json().catch(() => ({}));
+                const msg = errData.error?.message || '';
+                let waitSec = 20;
+                const match = msg.match(/retry in ([0-9.]+)s/);
+                if (match && match[1]) {
+                    waitSec = Math.ceil(parseFloat(match[1])) + 2;
+                }
+                if (onTick) onTick(`⏳ Gemini 분당 호출 제한(429) 감지: ${waitSec}초 후 자동 재시도 중...`);
+                await sleep(waitSec * 1000);
+                return await requestGeminiNative(promptText, apiKey, model, retryCount + 1, onTick);
+            }
+
+            if (!res.ok) {
+                clearInterval(timer);
+                clearTimeout(timeoutId);
+                const errData = await res.json().catch(() => ({}));
+                let errMsg = errData.error?.message || `HTTP ${res.status}`;
+                throw new Error(errMsg);
+            }
+
+            const data = await res.json();
+            clearInterval(timer);
+            clearTimeout(timeoutId);
+
+            const candidate = data.candidates?.[0];
+            if (!candidate) {
+                const promptFeedback = data.promptFeedback;
+                if (promptFeedback?.blockReason) throw new Error(`Google 안전 정책에 의해 차단됨 (${promptFeedback.blockReason})`);
+                throw new Error('Google Gemini 응답 없음');
+            }
+
+            const trans = candidate.content?.parts?.[0]?.text;
+            if (!trans) throw new Error('빈 텍스트 응답');
+            return trans.trim();
+        } catch (fetchErr) {
+            clearInterval(timer);
+            clearTimeout(timeoutId);
+            if (fetchErr.name === 'AbortError') {
+                throw new Error(`요청 시간 초과 (${timeoutSec}초): Gemini 응답이 지연되어 중단되었습니다.`);
+            }
+            throw fetchErr;
+        }
+    }
+
+    // Universal Translation Core (Auto-routes Native Gemini or OpenAI-compatible)
+    async function requestChunkTranslation(chunkText, isProse = false, retryCount = 0, onTick = null) {
+        const endpoint = document.getElementById('apiEndpoint').value.trim() || 'https://openrouter.ai/api/v1';
+        const apiKey = document.getElementById('apiKey').value.trim();
+        const model = document.getElementById('modelSelect').value;
+
+        if (!endpoint) throw new Error('엔드포인트 주소가 없습니다.');
+        if (!model) throw new Error('선택된 모델이 없습니다! 먼저 상단의 [🔄 모델 동기화]를 눌러 사용할 모델을 선택해주세요.');
+
+        // 1. Google Gemini Native Direct Routing
+        if (isGoogleAiStudio(endpoint)) {
+            const prompt = buildTranslationPrompt(chunkText, isProse);
+            return await requestGeminiNative(prompt, apiKey, model, retryCount, onTick);
+        }
+
+        // 2. OpenAI-Compatible Universal Routing (/chat/completions)
+        const url = endpoint.replace(/\/+$/, '') + '/chat/completions';
+        const prompt = buildTranslationPrompt(chunkText, isProse);
+
+        const headers = { 'Content-Type': 'application/json' };
+        if (endpoint.includes('openrouter.ai')) {
+            headers['HTTP-Referer'] = 'https://chara-trans.netlify.app';
+            headers['X-Title'] = 'RisuAI Character Card Translator';
+        }
         if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
 
         const timeoutSec = 90;
@@ -1733,26 +1942,23 @@ ${chunkText}`;
 
         if (!endpoint) throw new Error('엔드포인트 주소가 없습니다.');
         if (!model) throw new Error('선택된 모델이 없습니다! 먼저 상단의 [🔄 모델 동기화]를 눌러 사용할 모델을 선택해주세요.');
+
+        // 1. Google Gemini Native Direct Routing
+        if (isGoogleAiStudio(endpoint)) {
+            const prompt = buildKeywordsPrompt(keywordsText);
+            const raw = await requestGeminiNative(prompt, apiKey, model, retryCount, onTick);
+            return raw.replace(/^["']|["']$/g, '');
+        }
+
+        // 2. OpenAI-Compatible Universal Routing
         const url = endpoint.replace(/\/+$/, '') + '/chat/completions';
+        const prompt = buildKeywordsPrompt(keywordsText);
 
-        const langConfig = getSelectedLanguageConfig();
-        const prompt = `You are a professional localization translator specializing in character cards, lorebooks, and world info triggers.
-Translate the following comma-separated keywords into natural, accurate ${langConfig.name}.
-
-[Translation Guidelines]
-1. Translate each keyword accurately so that text roleplay chat triggers match the target language (${langConfig.name}).
-2. Format: Return the translated keywords separated by commas (e.g. "keyword 1, keyword 2, keyword 3").
-3. Faithfully localize fantasy terms, location names, factions, and character titles.
-4. Output ONLY the comma-separated list of translated keywords. Do NOT add notes, bullet points, numbers, or quotes.
-
-Source Keywords:
-${keywordsText}`;
-
-        const headers = {
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://chara-trans.netlify.app',
-            'X-Title': 'RisuAI Character Card Translator'
-        };
+        const headers = { 'Content-Type': 'application/json' };
+        if (endpoint.includes('openrouter.ai')) {
+            headers['HTTP-Referer'] = 'https://chara-trans.netlify.app';
+            headers['X-Title'] = 'RisuAI Character Card Translator';
+        }
         if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
 
         const timeoutSec = 60;
@@ -2382,12 +2588,18 @@ ${keywordsText}`;
     }
 
     async function retryFailedOnly() {
+        const isGemini = isGeminiActive();
+        const concurrency = isGemini ? 3 : 1;
+        const tasks = [];
+
         const textareas = document.querySelectorAll('.greeting-trans-input');
         for (let i = 0; i < textareas.length; i++) {
             const ta = textareas[i];
             if (ta.value.startsWith('[번역 실패') || ta.value === '번역 대기 중...') {
-                await retrySingleGreeting(i);
-                await sleep(400);
+                tasks.push(async () => {
+                    await retrySingleGreeting(i);
+                    if (!isGemini) await sleep(400);
+                });
             }
         }
 
