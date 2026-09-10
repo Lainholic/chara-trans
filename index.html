@@ -1183,7 +1183,7 @@
         gemini: {
             endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai',
             placeholder: 'AIzaSy... (Google AI Studio Key)',
-            defaultModel: 'gemini-3.8-flash'
+            defaultModel: 'gemini-2.5-flash-lite'
         },
         ollama: {
             endpoint: 'http://localhost:11434/v1',
@@ -1193,18 +1193,36 @@
     };
 
     const GEMINI_MODELS = [
-        { id: 'gemini-3.8-flash', name: 'gemini-3.8-flash (최신 시즌 초고속 추천 ⚡)' },
-        { id: 'gemini-3.5-flash', name: 'gemini-3.5-flash' },
-        { id: 'gemini-3.0-flash', name: 'gemini-3.0-flash' },
-        { id: 'gemini-2.5-flash', name: 'gemini-2.5-flash' },
-        { id: 'gemini-3.8-pro', name: 'gemini-3.8-pro (고지능 심층 번역)' },
-        { id: 'gemini-2.0-flash', name: 'gemini-2.0-flash (구버전 레거시)' }
+        // ⚡ Flash-Lite 시리즈 (초경량 / 극가성비 / 최고 속도 번역)
+        { id: 'gemini-2.5-flash-lite', name: '⚡ gemini-2.5-flash-lite (초경량 극가성비 추천 ⚡)', group: '⚡ Flash-Lite (초경량 / 극가성비 / 최고속도)' },
+        { id: 'gemini-2.0-flash-lite', name: '⚡ gemini-2.0-flash-lite (플래시 라이트 2.0 공식)', group: '⚡ Flash-Lite (초경량 / 극가성비 / 최고속도)' },
+        { id: 'gemini-2.0-flash-lite-preview-02-05', name: '⚡ gemini-2.0-flash-lite-preview-02-05', group: '⚡ Flash-Lite (초경량 / 극가성비 / 최고속도)' },
+        { id: 'gemini-3.8-flash-lite', name: '⚡ gemini-3.8-flash-lite (최신 시즌 플래시 라이트)', group: '⚡ Flash-Lite (초경량 / 극가성비 / 최고속도)' },
+        { id: 'gemini-3.5-flash-lite', name: '⚡ gemini-3.5-flash-lite', group: '⚡ Flash-Lite (초경량 / 극가성비 / 최고속도)' },
+        { id: 'gemini-3.0-flash-lite', name: '⚡ gemini-3.0-flash-lite', group: '⚡ Flash-Lite (초경량 / 극가성비 / 최고속도)' },
+        { id: 'gemini-1.5-flash-8b', name: '⚡ gemini-1.5-flash-8b (초경량 8B 레거시)', group: '⚡ Flash-Lite (초경량 / 극가성비 / 최고속도)' },
+
+        // 🚀 Flash 시리즈 (고속 표준 번역)
+        { id: 'gemini-3.8-flash', name: '🚀 gemini-3.8-flash (최신 시즌 플래시 🚀)', group: '🚀 Flash (고속 표준 번역)' },
+        { id: 'gemini-3.5-flash', name: '🚀 gemini-3.5-flash', group: '🚀 Flash (고속 표준 번역)' },
+        { id: 'gemini-3.0-flash', name: '🚀 gemini-3.0-flash', group: '🚀 Flash (고속 표준 번역)' },
+        { id: 'gemini-2.5-flash', name: '🚀 gemini-2.5-flash', group: '🚀 Flash (고속 표준 번역)' },
+        { id: 'gemini-2.0-flash', name: '🚀 gemini-2.0-flash (구버전 레거시)', group: '🚀 Flash (고속 표준 번역)' },
+
+        // 🧠 Pro 시리즈 (고지능 심층 번역)
+        { id: 'gemini-3.8-pro', name: '🧠 gemini-3.8-pro (고지능 심층 번역 🧠)', group: '🧠 Pro (고지능 심층 번역)' },
+        { id: 'gemini-2.5-pro', name: '🧠 gemini-2.5-pro', group: '🧠 Pro (고지능 심층 번역)' }
     ];
 
     function isGeminiActive() {
         const endpoint = (document.getElementById('apiEndpoint')?.value || '').toLowerCase();
+        // Google AI Studio Direct endpoint
+        if (endpoint.includes('generativelanguage.googleapis.com')) return true;
+        // OpenRouter and DeepSeek stay sequential to prevent 429
+        if (endpoint.includes('openrouter.ai') || endpoint.includes('deepseek.com')) return false;
+        // Other custom endpoints targeting Gemini directly
         const model = (document.getElementById('modelSelect')?.value || '').toLowerCase();
-        return endpoint.includes('generativelanguage.googleapis.com') || model.includes('gemini');
+        return model.includes('gemini');
     }
 
     function updateSpeedModeIndicator() {
@@ -1272,15 +1290,9 @@
 
         const sel = document.getElementById('modelSelect');
         if (key === 'gemini') {
-            sel.innerHTML = '';
-            GEMINI_MODELS.forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m.id;
-                opt.textContent = m.name;
-                sel.appendChild(opt);
-            });
-            sel.value = cfg.defaultModel;
             cachedModelList = GEMINI_MODELS;
+            populateModelDropdown(GEMINI_MODELS);
+            sel.value = cfg.defaultModel;
         } else {
             const exists = Array.from(sel.options).some(o => o.value === cfg.defaultModel);
             if (!exists) {
@@ -1515,44 +1527,71 @@
             return;
         }
 
-        // Group models by company/provider
-        const groups = {};
-        list.forEach(m => {
-            const prov = getModelProvider(m.id);
-            if (!groups[prov]) groups[prov] = [];
-            groups[prov].push(m);
-        });
-
-        // Determine group ordering
-        const orderedKeys = [];
-        PROVIDER_ORDER.forEach(k => {
-            if (groups[k] && groups[k].length > 0) orderedKeys.push(k);
-        });
-        Object.keys(groups).forEach(k => {
-            if (!orderedKeys.includes(k) && k !== 'other') orderedKeys.push(k);
-        });
-        if (groups['other'] && groups['other'].length > 0) {
-            orderedKeys.push('other');
-        }
-
-        // Populate with optgroups
-        orderedKeys.forEach(k => {
-            const grp = document.createElement('optgroup');
-            const label = PROVIDER_NAMES[k] || `📦 ${k.toUpperCase()}`;
-            grp.label = `${label} (${groups[k].length}개)`;
-
-            // Sort models within company alphabetically
-            groups[k].sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id));
-
-            groups[k].forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m.id;
-                const price = m.pricing?.prompt ? ` ($${(parseFloat(m.pricing.prompt)*1000000).toFixed(2)}/1M)` : '';
-                opt.textContent = `${m.name || m.id}${price}`;
-                grp.appendChild(opt);
+        // Check if list has pre-defined groups (e.g. GEMINI_MODELS)
+        const isPresetList = list.some(m => m.group);
+        if (isPresetList) {
+            const groups = {};
+            const groupOrder = [];
+            list.forEach(m => {
+                const g = m.group || 'Google Gemini';
+                if (!groups[g]) {
+                    groups[g] = [];
+                    groupOrder.push(g);
+                }
+                groups[g].push(m);
             });
-            sel.appendChild(grp);
-        });
+
+            groupOrder.forEach(g => {
+                const grp = document.createElement('optgroup');
+                grp.label = `${g} (${groups[g].length}개)`;
+                groups[g].forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.id;
+                    opt.textContent = m.name || m.id;
+                    grp.appendChild(opt);
+                });
+                sel.appendChild(grp);
+            });
+        } else {
+            // Group models by company/provider
+            const groups = {};
+            list.forEach(m => {
+                const prov = getModelProvider(m.id);
+                if (!groups[prov]) groups[prov] = [];
+                groups[prov].push(m);
+            });
+
+            // Determine group ordering
+            const orderedKeys = [];
+            PROVIDER_ORDER.forEach(k => {
+                if (groups[k] && groups[k].length > 0) orderedKeys.push(k);
+            });
+            Object.keys(groups).forEach(k => {
+                if (!orderedKeys.includes(k) && k !== 'other') orderedKeys.push(k);
+            });
+            if (groups['other'] && groups['other'].length > 0) {
+                orderedKeys.push('other');
+            }
+
+            // Populate with optgroups
+            orderedKeys.forEach(k => {
+                const grp = document.createElement('optgroup');
+                const label = PROVIDER_NAMES[k] || `📦 ${k.toUpperCase()}`;
+                grp.label = `${label} (${groups[k].length}개)`;
+
+                // Sort models within company alphabetically
+                groups[k].sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id));
+
+                groups[k].forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.id;
+                    const price = m.pricing?.prompt ? ` ($${(parseFloat(m.pricing.prompt)*1000000).toFixed(2)}/1M)` : '';
+                    opt.textContent = `${m.name || m.id}${price}`;
+                    grp.appendChild(opt);
+                });
+                sel.appendChild(grp);
+            });
+        }
 
         if (Array.from(sel.options).some(o => o.value === current)) {
             sel.value = current;
