@@ -21,6 +21,11 @@ A lightweight, 100% client-side web application to translate, edit, and localize
   - The application enforces **no proprietary moderation or refusal wrappers**; prompt payloads are passed directly to your configured AI endpoint. Supports **DeepSeek V3/R1**, **Llama 3.3 70B**, **Claude**, and local Ollama models for complex creative roleplay and dark fantasy cards.
 - 🎯 **Strict System Markup & Tag Preservation**:
   - Intelligently preserves `{{char}}`, `{{user}}`, `<START>`, quotes (`"..."`), and action asterisks (`*...*`).
+- 📚 **Full Lorebook & World Info Translation (Keys + Content)**:
+  - Translates embedded TavernCard V2/V3 `character_book` as well as standalone World Info JSON files.
+  - Translates both trigger keywords (`keys`, `secondary_keys`) and entry `content`.
+  - One-click trigger keyword preservation (`+ Include Original Keys`) ensures chat prompts trigger seamlessly in both original and translated languages.
+  - Losslessly preserves all entry attributes: IDs, priority, insertion order, enabled status, and custom extensions.
 - 🖼️ **Lossless PNG Chunk Parsing & Re-injection**:
   - Directly reads and writes binary `tEXt` chunks (`chara` and `ccv3`) with CRC32 checksum calculation. The original avatar image is preserved at 100% quality.
 - 🛡️ **100% Privacy & Client-Side Only**:
@@ -69,7 +74,11 @@ RisuAI, SillyTavern, Chub.ai의 V2/V3 PNG 카드 메타데이터(`chara`, `ccv3`
 2. **실시간 최신 모델 자동 동기화**: 오픈라우터의 최신 모델 목록을 실시간으로 긁어와 드롭다운에 채워주므로 코드 수정 불필요.
 3. **클라이언트 필터 미부과 (Direct Pipeline)**: 앱 자체적인 중간 검열 레이어 없이 사용자가 설정한 AI 모델에 원본을 직결하여, 다크 판타지나 복잡한 롤플레잉 서사도 거부 없이 매끄럽게 번역.
 4. **특수 태그 보존**: `{{char}}`, `{{user}}`, `<START>` 등의 마크업 태그 완벽 보존.
-5. **PNG 무손실 재주입**: 이미지 화질 손상 없이 번역된 메타데이터를 바이너리 레벨에서 다시 구워내어 RisuAI/실리태번에서 바로 사용 가능.
+5. **📚 로어북 / 월드 인포(키워드+본문) 무손실 번역**:
+   - V2/V3 내장 `character_book` 및 단독 월드 인포 JSON 파일 완벽 지원.
+   - 대화 트리거 검색 키워드(Keys/Secondary Keys)와 본문(Content)을 목표 언어에 맞게 정밀 번역.
+   - `[+ 원본 키워드 함께 포함]` 원클릭 버튼으로 한국어와 원문 키워드를 동시에 등록하여 롤플레잉 트리거 호환성 극대화.
+6. **PNG 무손실 재주입**: 이미지 화질 손상 없이 번역된 메타데이터를 바이너리 레벨에서 다시 구워내어 RisuAI/실리태번에서 바로 사용 가능.
 
 ---
 

@@ -484,6 +484,118 @@
             display: block;
             max-width: 100%;
         }
+
+        /* Lorebook & World Info Styles */
+        .badge-lorebook {
+            background: rgba(168, 85, 247, 0.2);
+            color: #c084fc;
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            font-size: 11.5px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 10px;
+        }
+        .lore-entry-card {
+            background: #1e1f22;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 14px;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+            max-width: 100%;
+        }
+        .lore-entry-card:hover {
+            border-color: rgba(168, 85, 247, 0.5);
+        }
+        .lore-entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .lore-entry-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 200px;
+        }
+        .lore-entry-id {
+            font-size: 11.5px;
+            font-weight: 800;
+            color: #c084fc;
+            background: rgba(168, 85, 247, 0.15);
+            padding: 2px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+        .lore-entry-name-input {
+            background: #141517;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            width: auto;
+            max-width: 240px;
+            transition: border-color 0.2s;
+        }
+        .lore-entry-name-input:focus {
+            outline: none;
+            border-color: var(--openrouter-accent);
+        }
+        .lore-entry-status {
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .lore-entry-status.enabled {
+            background: rgba(87, 242, 135, 0.15);
+            color: #57f287;
+        }
+        .lore-entry-status.disabled {
+            background: rgba(148, 155, 164, 0.15);
+            color: var(--text-muted);
+        }
+        .lore-keys-pane {
+            max-height: 80px;
+            font-size: 12.5px;
+            color: #94a3b8;
+        }
+        .lore-keys-input {
+            height: auto;
+            font-size: 13px;
+            color: var(--trans-text);
+            padding: 8px 12px;
+        }
+        .lore-content-pane {
+            max-height: 180px;
+        }
+        .lore-content-input {
+            height: 160px;
+        }
+        .lore-helper-btn {
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            color: var(--openrouter-accent);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .lore-helper-btn:hover {
+            background: rgba(56, 189, 248, 0.25);
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -600,6 +712,7 @@
                 <label title="Toggle saving translated lore to card"><input type="checkbox" id="saveDescKo" checked onchange="updateDiffInspector()"> <span id="optDescKo">설명/성격/배경도 번역본으로 저장</span></label>
                 <label><input type="checkbox" id="saveMesExampleKo" checked onchange="updateDiffInspector()"> <span id="optMesExKo">대화 예시 번역본 저장</span></label>
                 <label><input type="checkbox" id="chkInjectPrompt" checked onchange="updateDiffInspector()"> <span id="optInjectPrompt">선택 언어 출력 지침 주입</span></label>
+                <label title="로어북(키워드+본문) 번역본을 카드에 반영하여 저장"><input type="checkbox" id="saveLorebookKo" checked onchange="updateDiffInspector()"> <span id="optLorebookKo">로어북(키워드+본문) 번역본 저장</span></label>
             </div>
             <div class="btn-group">
                 <button type="button" class="btn-diff-inspect" id="btnInspectDiff" onclick="toggleChunkDiffInspector()" title="원본과 번역본의 PNG 메타데이터 청크 구조를 1바이트 단위로 대조 검증합니다">🔍 무손실 청크 검증</button>
@@ -712,7 +825,32 @@
             </div>
         </div>
 
-        <!-- 6. Lossless Chunk Integrity Inspector (Claude UX Recommendation) -->
+        <!-- 6. Lorebook & World Info (Character Book) -->
+        <div class="section-box" id="secLorebookBox">
+            <div class="section-title">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span id="secTitleLorebook">📚 로어북 / 월드 인포 (Character Book & Lorebook)</span>
+                    <span class="badge-lorebook" id="lorebookCountBadge">0개 항목</span>
+                </div>
+                <div class="section-controls">
+                    <span id="statusLorebook" class="loading"></span>
+                    <button type="button" class="item-retry-btn" id="btnTranslateLorebookAll" onclick="translateAllLorebookEntries()">🔄 로어북만 전체 번역</button>
+                    <button type="button" class="preset-btn" style="padding:4px 8px; font-size:11px;" onclick="addNewEmptyLorebookEntry()">➕ 항목 추가</button>
+                </div>
+            </div>
+            
+            <div id="noLorebookNotice" style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 13px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px dashed var(--border-color); margin-top: 10px;">
+                ℹ️ 현재 캐릭터 카드에 내장된 로어북(character_book) 항목이 없습니다.<br>
+                <span style="font-size: 12px; color: #64748b;">(로어북이 포함된 V2/V3 카드 또는 단독 월드인포 JSON을 불러오면 이곳에 키워드 및 본문 목록이 표시됩니다.)</span>
+                <div style="margin-top: 10px;">
+                    <button type="button" class="preset-btn" onclick="addNewEmptyLorebookEntry()">➕ 새 로어북 항목 수동 추가</button>
+                </div>
+            </div>
+
+            <div id="lorebookContainer" style="display: none; margin-top: 12px;"></div>
+        </div>
+
+        <!-- 7. Lossless Chunk Integrity Inspector (Claude UX Recommendation) -->
         <div class="section-box" id="chunkInspectorBox" style="border: 1px solid rgba(59, 130, 246, 0.4); background: rgba(30, 41, 59, 0.6); margin-top: 24px;">
             <div class="section-title" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;" onclick="toggleChunkDiffInspector()">
                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -826,6 +964,7 @@
             opt_desc_ko: "설명/성격/배경도 번역본으로 저장",
             opt_mes_ex_ko: "대화 예시 번역본 저장",
             opt_inject_prompt: "선택 언어 출력 지침 주입",
+            opt_lorebook_ko: "로어북(키워드+본문) 번역본 저장",
             btn_retry_failed: "⚠️ 실패 항목만 재번역",
             btn_translate_all: "🔄 전체 번역 시작",
             btn_save_png: "💾 PNG 카드 저장",
@@ -835,6 +974,8 @@
             sec_mes_ex: "🗣️ 대화 예시 (Message Examples)",
             sec_personality: "🧠 성격 (Personality)",
             sec_scenario: "🌍 시나리오 및 배경 (Scenario)",
+            sec_lorebook: "📚 로어북 / 월드 인포 (Character Book & Lorebook)",
+            btn_translate_lorebook_all: "🔄 로어북만 전체 번역",
             btn_retry_item: "🔄 이 부분만 번역",
             raw_label: "원본",
             trans_label: "번역본 (수정 가능)"
@@ -863,6 +1004,7 @@
             opt_desc_ko: "Save Desc/Personality/Scenario in target language",
             opt_mes_ex_ko: "Save Message Examples in target language",
             opt_inject_prompt: "Inject target language output instruction",
+            opt_lorebook_ko: "Save Lorebook (Keys + Content) in target language",
             btn_retry_failed: "⚠️ Retry Failed Only",
             btn_translate_all: "🔄 Translate All",
             btn_save_png: "💾 Save PNG Card",
@@ -872,6 +1014,8 @@
             sec_mes_ex: "🗣️ Message Examples",
             sec_personality: "🧠 Personality",
             sec_scenario: "🌍 Scenario & Lore",
+            sec_lorebook: "📚 Lorebook & World Info (Character Book)",
+            btn_translate_lorebook_all: "🔄 Translate Lorebook Only",
             btn_retry_item: "🔄 Translate This Only",
             raw_label: "Original Text",
             trans_label: "Translation (Editable)"
@@ -900,6 +1044,7 @@
             opt_desc_ko: "説明/性格/シナリオも翻訳版で保存",
             opt_mes_ex_ko: "対話例も翻訳版で保存",
             opt_inject_prompt: "選択言語での返答指示を注入",
+            opt_lorebook_ko: "ロアブック(キーワード+本文)も翻訳版で保存",
             btn_retry_failed: "⚠️ 失敗項目のみ再翻訳",
             btn_translate_all: "🔄 全体翻訳開始",
             btn_save_png: "💾 PNGカード保存",
@@ -909,6 +1054,8 @@
             sec_mes_ex: "🗣️ 対話例 (Message Examples)",
             sec_personality: "🧠 性格 (Personality)",
             sec_scenario: "🌍 シナリオ & 背景 (Scenario)",
+            sec_lorebook: "📚 ロアブック / ワールドインフォ (Character Book)",
+            btn_translate_lorebook_all: "🔄 ロアブックのみ一括翻訳",
             btn_retry_item: "🔄 この項目のみ翻訳",
             raw_label: "原文",
             trans_label: "翻訳結果 (編集可能)"
@@ -973,6 +1120,7 @@
         safeSetText('optDescKo', t.opt_desc_ko);
         safeSetText('optMesExKo', t.opt_mes_ex_ko);
         safeSetText('optInjectPrompt', t.opt_inject_prompt);
+        safeSetText('optLorebookKo', t.opt_lorebook_ko);
         safeSetText('btnRetryFailed', t.btn_retry_failed);
         safeSetText('btnTranslateAll', t.btn_translate_all);
         safeSetText('btnSavePng', t.btn_save_png);
@@ -983,10 +1131,13 @@
         safeSetText('secTitleMesEx', t.sec_mes_ex);
         safeSetText('secTitlePersonality', t.sec_personality);
         safeSetText('secTitleScenario', t.sec_scenario);
+        safeSetText('secTitleLorebook', t.sec_lorebook);
+        safeSetText('btnTranslateLorebookAll', t.btn_translate_lorebook_all);
 
         // Retry Item Buttons
         document.querySelectorAll('.item-retry-btn').forEach(btn => {
-            if (!btn.innerText.includes('그리팅') && !btn.innerText.includes('Greeting') && !btn.innerText.includes('挨拶')) {
+            if (btn.id === 'btnTranslateLorebookAll') return;
+            if (!btn.innerText.includes('그리팅') && !btn.innerText.includes('Greeting') && !btn.innerText.includes('挨拶') && !btn.innerText.includes('🗑️')) {
                 btn.innerText = t.btn_retry_item;
             }
         });
@@ -1448,6 +1599,440 @@ ${chunkText}`;
         });
     }
 
+    // ==========================================
+    // Lorebook / World Info Translation Core
+    // ==========================================
+    async function requestKeywordsTranslation(keywordsText, retryCount = 0, onTick = null) {
+        if (!keywordsText || keywordsText.trim() === '') return '';
+        const endpoint = document.getElementById('apiEndpoint').value.trim() || 'https://openrouter.ai/api/v1';
+        const apiKey = document.getElementById('apiKey').value.trim();
+        const model = document.getElementById('modelSelect').value;
+
+        if (!endpoint) throw new Error('엔드포인트 주소가 없습니다.');
+        if (!model) throw new Error('선택된 모델이 없습니다! 먼저 상단의 [🔄 모델 동기화]를 눌러 사용할 모델을 선택해주세요.');
+        const url = endpoint.replace(/\/+$/, '') + '/chat/completions';
+
+        const langConfig = getSelectedLanguageConfig();
+        const prompt = `You are a professional localization translator specializing in character cards, lorebooks, and world info triggers.
+Translate the following comma-separated keywords into natural, accurate ${langConfig.name}.
+
+[Translation Guidelines]
+1. Translate each keyword accurately so that text roleplay chat triggers match the target language (${langConfig.name}).
+2. Format: Return the translated keywords separated by commas (e.g. "keyword 1, keyword 2, keyword 3").
+3. Faithfully localize fantasy terms, location names, factions, and character titles.
+4. Output ONLY the comma-separated list of translated keywords. Do NOT add notes, bullet points, numbers, or quotes.
+
+Source Keywords:
+${keywordsText}`;
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://chara-trans.netlify.app',
+            'X-Title': 'RisuAI Character Card Translator'
+        };
+        if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+
+        const timeoutSec = 60;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutSec * 1000);
+
+        let elapsed = 0;
+        if (onTick) onTick(elapsed);
+        const timer = setInterval(() => {
+            elapsed++;
+            if (onTick) onTick(elapsed);
+        }, 1000);
+
+        let res, data;
+        try {
+            res = await fetch(url, {
+                method: 'POST',
+                headers: headers,
+                signal: controller.signal,
+                body: JSON.stringify({
+                    model: model,
+                    messages: [
+                        {
+                            role: 'system',
+                            content: 'You are a precise translator specializing in keyword localization for fictional roleplay lorebooks.'
+                        },
+                        { role: 'user', content: prompt }
+                    ],
+                    temperature: 0.1
+                })
+            });
+
+            if ((res.status === 429 || res.status === 502 || res.status === 503) && retryCount < 2) {
+                clearInterval(timer);
+                clearTimeout(timeoutId);
+                await sleep(3000);
+                return await requestKeywordsTranslation(keywordsText, retryCount + 1, onTick);
+            }
+
+            if (!res.ok) {
+                clearInterval(timer);
+                clearTimeout(timeoutId);
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error?.message || `HTTP ${res.status}`);
+            }
+
+            data = await res.json();
+            clearInterval(timer);
+            clearTimeout(timeoutId);
+        } catch (fetchErr) {
+            clearInterval(timer);
+            clearTimeout(timeoutId);
+            if (fetchErr.name === 'AbortError') {
+                throw new Error(`요청 시간 초과 (${timeoutSec}초)`);
+            }
+            throw fetchErr;
+        }
+
+        const content = data?.choices?.[0]?.message?.content;
+        if (!content) throw new Error('응답 텍스트가 비어있습니다.');
+        return content.trim().replace(/^["']|["']$/g, '');
+    }
+
+    function getCardCharacterBook(cardObj) {
+        if (!cardObj) return null;
+        const d = cardObj.data || cardObj;
+        if (d.character_book && typeof d.character_book === 'object') return d.character_book;
+        if (cardObj.character_book && typeof cardObj.character_book === 'object') return cardObj.character_book;
+        if (cardObj.entries && (Array.isArray(cardObj.entries) || typeof cardObj.entries === 'object')) return cardObj;
+        if (d.entries && (Array.isArray(d.entries) || typeof d.entries === 'object')) return d;
+        return null;
+    }
+
+    function getLorebookEntries(cb) {
+        if (!cb || !cb.entries) return [];
+        if (Array.isArray(cb.entries)) return cb.entries;
+        if (typeof cb.entries === 'object') return Object.values(cb.entries);
+        return [];
+    }
+
+    function extractKeysArray(entry) {
+        if (!entry) return [];
+        let raw = entry.keys !== undefined ? entry.keys : entry.key;
+        if (!raw) return [];
+        if (typeof raw === 'string') {
+            return raw.split(',').map(s => s.trim()).filter(Boolean);
+        }
+        if (Array.isArray(raw)) {
+            const res = [];
+            raw.forEach(item => {
+                if (typeof item === 'string') {
+                    item.split(',').forEach(s => {
+                        const t = s.trim();
+                        if (t) res.push(t);
+                    });
+                }
+            });
+            return res;
+        }
+        return [];
+    }
+
+    function extractSecondaryKeysArray(entry) {
+        if (!entry) return [];
+        let raw = entry.secondary_keys !== undefined ? entry.secondary_keys : entry.keysecondary;
+        if (!raw) return [];
+        if (typeof raw === 'string') {
+            return raw.split(',').map(s => s.trim()).filter(Boolean);
+        }
+        if (Array.isArray(raw)) {
+            const res = [];
+            raw.forEach(item => {
+                if (typeof item === 'string') {
+                    item.split(',').forEach(s => {
+                        const t = s.trim();
+                        if (t) res.push(t);
+                    });
+                }
+            });
+            return res;
+        }
+        return [];
+    }
+
+    function appendOriginalKeys(idx) {
+        const rawEl = document.getElementById(`raw_lore_keys_${idx}`);
+        const transInput = document.getElementById(`trans_lore_keys_${idx}`);
+        if (!rawEl || !transInput) return;
+        const rawText = rawEl.innerText.trim();
+        if (!rawText || rawText === '(키워드 없음)') return;
+
+        let curr = transInput.value.trim();
+        if (curr === '번역 대기 중...' || curr.startsWith('[')) curr = '';
+
+        const rawKeys = rawText.split(',').map(s => s.trim()).filter(Boolean);
+        const currKeys = curr ? curr.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+        rawKeys.forEach(k => {
+            if (!currKeys.includes(k)) currKeys.push(k);
+        });
+
+        transInput.value = currKeys.join(', ');
+        showToast('원본 트리거 키워드가 함께 추가되었습니다.');
+        updateDiffInspector();
+    }
+
+    function addNewEmptyLorebookEntry() {
+        if (!globalCardObj) {
+            alert('먼저 캐릭터 카드 또는 JSON 파일을 불러와주세요.');
+            return;
+        }
+        let target = globalCardObj.data || globalCardObj;
+        if (!target.character_book || typeof target.character_book !== 'object') {
+            target.character_book = {
+                name: (target.name || 'Character') + ' Lorebook',
+                description: '',
+                scan_depth: 100,
+                token_budget: 500,
+                recursive_scanning: false,
+                entries: []
+            };
+            if (globalCardObj.data && !globalCardObj.character_book) {
+                globalCardObj.character_book = target.character_book;
+            }
+        }
+
+        const cb = target.character_book;
+        if (!Array.isArray(cb.entries)) {
+            cb.entries = Object.values(cb.entries || {});
+        }
+
+        const newId = cb.entries.length + 1;
+        cb.entries.push({
+            id: newId,
+            keys: ['새_키워드'],
+            secondary_keys: [],
+            comment: `새 로어북 #${newId}`,
+            content: '',
+            enabled: true,
+            insertion_order: 100,
+            case_sensitive: false,
+            priority: 10,
+            selective: true,
+            constant: false,
+            position: 'before_char',
+            extensions: {}
+        });
+
+        renderLorebookUI(target, globalCardObj);
+        showToast(`새 로어북 항목 #${newId}이 추가되었습니다.`);
+        updateDiffInspector();
+    }
+
+    function deleteLorebookEntry(index) {
+        if (!confirm(`로어북 항목 #${index + 1}을(를) 삭제하시겠습니까?`)) return;
+        const target = globalCardObj.data || globalCardObj;
+        const cb = getCardCharacterBook(globalCardObj);
+        if (!cb || !cb.entries) return;
+
+        if (Array.isArray(cb.entries)) {
+            cb.entries.splice(index, 1);
+        } else {
+            const arr = Object.values(cb.entries);
+            arr.splice(index, 1);
+            cb.entries = arr;
+        }
+        renderLorebookUI(target, globalCardObj);
+        showToast('로어북 항목이 삭제되었습니다.');
+        updateDiffInspector();
+    }
+
+    function renderLorebookUI(d, cardObj) {
+        const cb = getCardCharacterBook(cardObj || globalCardObj);
+        const entries = getLorebookEntries(cb);
+
+        const countBadge = document.getElementById('lorebookCountBadge');
+        const container = document.getElementById('lorebookContainer');
+        const noNotice = document.getElementById('noLorebookNotice');
+
+        if (countBadge) countBadge.innerText = `${entries.length}개 항목`;
+
+        if (!entries || entries.length === 0) {
+            if (noNotice) noNotice.style.display = 'block';
+            if (container) {
+                container.style.display = 'none';
+                container.innerHTML = '';
+            }
+            return;
+        }
+
+        if (noNotice) noNotice.style.display = 'none';
+        if (container) {
+            container.style.display = 'block';
+            container.innerHTML = '';
+        }
+
+        entries.forEach((entry, i) => {
+            const keysArr = extractKeysArray(entry);
+            const rawKeysStr = keysArr.join(', ');
+            const secArr = extractSecondaryKeysArray(entry);
+            const rawSecStr = secArr.join(', ');
+            const hasSecondary = secArr.length > 0;
+            const entryComment = entry.comment || entry.name || `항목 #${i + 1}`;
+            const isEnabled = entry.enabled !== false;
+
+            const card = document.createElement('div');
+            card.className = 'lore-entry-card';
+            card.id = `loreEntry_${i}`;
+
+            card.innerHTML = `
+                <div class="lore-entry-header">
+                    <div class="lore-entry-meta">
+                        <span class="lore-entry-id">#${i + 1}</span>
+                        <input type="text" class="lore-entry-name-input" id="trans_lore_comment_${i}" value="${escapeHtml(entryComment)}" placeholder="항목 이름/메모">
+                        <span class="lore-entry-status ${isEnabled ? 'enabled' : 'disabled'}">${isEnabled ? '활성화' : '비활성화'}</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span id="status_lore_${i}" class="loading" style="font-size:12px;"></span>
+                        <button type="button" class="item-retry-btn" onclick="retrySingleLorebookEntry(${i})">🔄 이 항목만 번역</button>
+                        <button type="button" class="item-retry-btn" style="color:var(--danger-color); border-color:rgba(237,66,69,0.3);" onclick="deleteLorebookEntry(${i})" title="항목 삭제">🗑️</button>
+                    </div>
+                </div>
+
+                <div class="lore-field-group">
+                    <div class="content-grid" style="margin-bottom: 8px;">
+                        <div>
+                            <div class="pane-label">🔑 원본 트리거 키워드 (Keys)</div>
+                            <div class="pane lore-keys-pane" id="raw_lore_keys_${i}">${escapeHtml(rawKeysStr || '(키워드 없음)')}</div>
+                        </div>
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                <div class="pane-label" style="margin-bottom:0;">🔑 번역 키워드 (쉼표 구분)</div>
+                                <button type="button" class="lore-helper-btn" onclick="appendOriginalKeys(${i})" title="번역 키워드 뒤에 원본 키워드를 함께 추가하여 두 언어 모두에서 트리거되도록 합니다">+ 원본 키워드 함께 포함</button>
+                            </div>
+                            <input type="text" class="pane lore-keys-input" id="trans_lore_keys_${i}" value="${rawKeysStr ? '번역 대기 중...' : ''}" placeholder="번역 대기 중... (예: 엘프, 숲, 정령)">
+                        </div>
+                    </div>
+
+                    ${hasSecondary ? `
+                    <div class="content-grid" style="margin-bottom: 8px;">
+                        <div>
+                            <div class="pane-label">🗝️ 원본 보조 키워드 (Secondary Keys)</div>
+                            <div class="pane lore-keys-pane" id="raw_lore_secondary_${i}">${escapeHtml(rawSecStr)}</div>
+                        </div>
+                        <div>
+                            <div class="pane-label">🗝️ 번역 보조 키워드</div>
+                            <input type="text" class="pane lore-keys-input" id="trans_lore_secondary_${i}" value="${rawSecStr ? '번역 대기 중...' : ''}" placeholder="번역 대기 중...">
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+
+                <div class="content-grid">
+                    <div>
+                        <div class="pane-label">📜 원본 본문 (Content)</div>
+                        <div class="pane lore-content-pane" id="raw_lore_content_${i}">${escapeHtml(entry.content || '(내용 없음)')}</div>
+                    </div>
+                    <div>
+                        <div class="pane-label">📜 번역 본문 (수정 가능)</div>
+                        <textarea class="pane lore-content-input" id="trans_lore_content_${i}">${entry.content ? '번역 대기 중...' : ''}</textarea>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    async function retrySingleLorebookEntry(index) {
+        const rawKeysEl = document.getElementById(`raw_lore_keys_${index}`);
+        const transKeysInput = document.getElementById(`trans_lore_keys_${index}`);
+        const rawSecEl = document.getElementById(`raw_lore_secondary_${index}`);
+        const transSecInput = document.getElementById(`trans_lore_secondary_${index}`);
+        const rawContentEl = document.getElementById(`raw_lore_content_${index}`);
+        const transContentTa = document.getElementById(`trans_lore_content_${index}`);
+        const statusEl = document.getElementById(`status_lore_${index}`);
+
+        const rawKeys = rawKeysEl ? rawKeysEl.innerText.trim() : '';
+        const rawSec = rawSecEl ? rawSecEl.innerText.trim() : '';
+        const rawContent = rawContentEl ? rawContentEl.innerText.trim() : '';
+
+        if (statusEl) {
+            statusEl.className = 'loading';
+            statusEl.innerText = '⏳ 번역 중...';
+        }
+
+        let hasError = false;
+
+        // 1. Translate keywords
+        if (rawKeys && rawKeys !== '(키워드 없음)') {
+            if (transKeysInput) transKeysInput.value = '⏳ 키워드 번역 중...';
+            try {
+                const transKeys = await requestKeywordsTranslation(rawKeys);
+                if (transKeysInput) transKeysInput.value = transKeys;
+            } catch (e) {
+                if (transKeysInput) transKeysInput.value = `[키워드 실패: ${e.message}]`;
+                hasError = true;
+            }
+        }
+
+        // 2. Translate secondary keys if present
+        if (rawSec && transSecInput) {
+            transSecInput.value = '⏳ 보조 키워드 번역 중...';
+            try {
+                const transSec = await requestKeywordsTranslation(rawSec);
+                transSecInput.value = transSec;
+            } catch (e) {
+                transSecInput.value = `[보조키 실패: ${e.message}]`;
+                hasError = true;
+            }
+        }
+
+        // 3. Translate content
+        if (rawContent && rawContent !== '(내용 없음)') {
+            if (transContentTa) transContentTa.value = '⏳ 자연스러운 문체로 번역 중... (0초 경과)';
+            try {
+                const res = await translateTextSmart(rawContent, true, (msg) => {
+                    if (transContentTa) transContentTa.value = msg;
+                    if (statusEl) statusEl.innerText = msg.replace('⏳ 자연스러운 문체로 ', '⏳ ').replace(' 번역 중...', '');
+                });
+                if (transContentTa) transContentTa.value = res;
+            } catch (e) {
+                if (transContentTa) transContentTa.value = `[번역 실패: ${e.message}]`;
+                hasError = true;
+            }
+        }
+
+        if (statusEl) {
+            statusEl.className = hasError ? 'loading status-error' : 'loading status-ok';
+            statusEl.innerText = hasError ? '✗ 실패' : '✓ 완료';
+        }
+        updateDiffInspector();
+        return !hasError;
+    }
+
+    async function translateAllLorebookEntries() {
+        const cb = getCardCharacterBook(globalCardObj);
+        const entries = getLorebookEntries(cb);
+        if (!entries || entries.length === 0) {
+            showToast('번역할 로어북 항목이 없습니다.');
+            return;
+        }
+
+        const stLore = document.getElementById('statusLorebook');
+        if (stLore) {
+            stLore.className = 'loading';
+            stLore.innerText = `⏳ 로어북 번역 중 (0/${entries.length})...`;
+        }
+
+        let anyFail = false;
+        for (let i = 0; i < entries.length; i++) {
+            if (stLore) stLore.innerText = `⏳ 로어북 번역 중 (${i + 1}/${entries.length})...`;
+            const ok = await retrySingleLorebookEntry(i);
+            if (!ok) anyFail = true;
+            await sleep(400);
+        }
+
+        if (stLore) {
+            stLore.className = anyFail ? 'loading status-error' : 'loading status-ok';
+            stLore.innerText = anyFail ? '✗ 일부 실패' : '✓ 로어북 전체 완료';
+        }
+        showToast(anyFail ? '로어북 일부 항목 번역에 실패했습니다.' : '로어북 전체 번역이 완료되었습니다!');
+    }
+
     // Drag & Drop / File Handling
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('fileInput');
@@ -1529,10 +2114,18 @@ ${chunkText}`;
             avatarEl.style.display = 'none';
         }
 
-        document.getElementById('charName').innerText = d.name || '이름 없음';
-        document.getElementById('charCreator').innerText = `제작자: ${d.creator || d.creator_notes || '미상'}`;
+        const cb = getCardCharacterBook(globalCardObj);
+        const isStandalone = (!d.name && !d.first_mes && !d.description && cb);
+        if (isStandalone) {
+            document.getElementById('charName').innerText = (cb.name || '단독 로어북 / 월드 인포');
+            document.getElementById('charCreator').innerText = '형식: Standalone Lorebook (World Info)';
+        } else {
+            document.getElementById('charName').innerText = d.name || '이름 없음';
+            document.getElementById('charCreator').innerText = `제작자: ${d.creator || d.creator_notes || '미상'}`;
+        }
 
         renderGreetingsUI(d);
+        renderLorebookUI(d, globalCardObj);
 
         const mesEx = d.mes_example || d.mes_examples || '';
         document.getElementById('rawMesExample').innerText = mesEx || '(내용 없음)';
@@ -1674,6 +2267,20 @@ ${chunkText}`;
                 await sleep(400);
             }
         }
+
+        // Retry failed lorebook entries
+        const cbFailed = getCardCharacterBook(globalCardObj);
+        const loreEntriesFailed = getLorebookEntries(cbFailed);
+        for (let i = 0; i < loreEntriesFailed.length; i++) {
+            const transKeysInput = document.getElementById(`trans_lore_keys_${i}`);
+            const transContentTa = document.getElementById(`trans_lore_content_${i}`);
+            const needsRetry = (transKeysInput && (transKeysInput.value === '번역 대기 중...' || transKeysInput.value.startsWith('['))) ||
+                               (transContentTa && (transContentTa.value === '번역 대기 중...' || transContentTa.value.startsWith('[')));
+            if (needsRetry) {
+                await retrySingleLorebookEntry(i);
+                await sleep(400);
+            }
+        }
     }
 
     async function translateAllSequential() {
@@ -1725,6 +2332,29 @@ ${chunkText}`;
         }
         if (d.scenario && d.scenario.trim() !== '') {
             await retrySingleItem('scenario');
+            await sleep(400);
+        }
+
+        // 6. Lorebook Translation
+        const cb = getCardCharacterBook(globalCardObj);
+        const loreEntries = getLorebookEntries(cb);
+        if (loreEntries && loreEntries.length > 0) {
+            const stLore = document.getElementById('statusLorebook');
+            if (stLore) {
+                stLore.className = 'loading';
+                stLore.innerText = `⏳ 로어북 번역 중 (0/${loreEntries.length})...`;
+            }
+            let loreFail = false;
+            for (let i = 0; i < loreEntries.length; i++) {
+                if (stLore) stLore.innerText = `⏳ 로어북 번역 중 (${i + 1}/${loreEntries.length})...`;
+                const ok = await retrySingleLorebookEntry(i);
+                if (!ok) loreFail = true;
+                await sleep(400);
+            }
+            if (stLore) {
+                stLore.className = loreFail ? 'loading status-error' : 'loading status-ok';
+                stLore.innerText = loreFail ? '✗ 일부 실패' : '✓ 완료';
+            }
         }
     }
 
@@ -1774,12 +2404,64 @@ ${chunkText}`;
             }
         }
 
+        if (document.getElementById('saveLorebookKo')?.checked) {
+            const cb = target.character_book || (target.data && target.data.character_book) || (clone.character_book);
+            if (cb && cb.entries) {
+                const isArray = Array.isArray(cb.entries);
+                const entriesList = isArray ? cb.entries : Object.values(cb.entries);
+
+                entriesList.forEach((entry, i) => {
+                    // Update keys
+                    const keysInput = document.getElementById(`trans_lore_keys_${i}`);
+                    if (keysInput && keysInput.value && keysInput.value !== '번역 대기 중...' && !keysInput.value.startsWith('[')) {
+                        const newKeys = keysInput.value.split(',').map(k => k.trim()).filter(Boolean);
+                        if (newKeys.length > 0) {
+                            if (Array.isArray(entry.keys)) entry.keys = newKeys;
+                            else if (Array.isArray(entry.key)) entry.key = newKeys;
+                            else entry.keys = newKeys;
+                        }
+                    }
+
+                    // Update secondary keys
+                    const secInput = document.getElementById(`trans_lore_secondary_${i}`);
+                    if (secInput && secInput.value && secInput.value !== '번역 대기 중...' && !secInput.value.startsWith('[')) {
+                        const newSec = secInput.value.split(',').map(k => k.trim()).filter(Boolean);
+                        if (newSec.length > 0) {
+                            if (Array.isArray(entry.secondary_keys)) entry.secondary_keys = newSec;
+                            else if (Array.isArray(entry.keysecondary)) entry.keysecondary = newSec;
+                        }
+                    }
+
+                    // Update comment/name
+                    const nameInput = document.getElementById(`trans_lore_comment_${i}`);
+                    if (nameInput && nameInput.value.trim()) {
+                        if (entry.name !== undefined) entry.name = nameInput.value.trim();
+                        else entry.comment = nameInput.value.trim();
+                    }
+
+                    // Update content
+                    const contentTa = document.getElementById(`trans_lore_content_${i}`);
+                    if (contentTa && contentTa.value && contentTa.value !== '번역 대기 중...' && !contentTa.value.startsWith('[')) {
+                        entry.content = contentTa.value;
+                    }
+                });
+
+                if (clone.data) {
+                    clone.data.character_book = cb;
+                    if (clone.character_book) clone.character_book = cb;
+                } else {
+                    clone.character_book = cb;
+                }
+            }
+        }
+
         if (clone.data) {
             if (clone.description !== undefined) clone.description = target.description;
             if (clone.personality !== undefined) clone.personality = target.personality;
             if (clone.scenario !== undefined) clone.scenario = target.scenario;
             if (clone.first_mes !== undefined) clone.first_mes = target.first_mes;
             if (clone.mes_example !== undefined) clone.mes_example = target.mes_example;
+            if (clone.character_book !== undefined && target.character_book !== undefined) clone.character_book = target.character_book;
         }
 
         return clone;
@@ -1789,7 +2471,8 @@ ${chunkText}`;
         const data = getUpdatedCardData();
         const jsonStr = JSON.stringify(data, null, 2);
         const blob = new Blob([jsonStr], { type: 'application/json' });
-        const langCode = (document.getElementById('targetLangSelect')?.value || 'ko').toUpperCase(); const name = (data.data?.name || data.name || 'character') + '_' + langCode + '.json';
+        const langCode = (document.getElementById('targetLangSelect')?.value || 'ko').toUpperCase();
+        const name = (data.data?.name || data.name || (data.character_book?.name) || 'lorebook') + '_' + langCode + '.json';
         saveBlob(blob, name);
     }
 
@@ -1907,6 +2590,25 @@ ${chunkText}`;
             textPill.innerText = isPng ? 'tEXt (chara/ccv3 무손실 주입)' : 'JSON (구조적 무손실)';
         }
 
+        const origCb = getCardCharacterBook(globalCardObj);
+        const updCb = getCardCharacterBook(updated);
+        const origEntries = getLorebookEntries(origCb);
+        const updEntries = getLorebookEntries(updCb);
+
+        let isLoreTrans = false;
+        if (origEntries.length > 0 || updEntries.length > 0) {
+            for (let i = 0; i < Math.min(origEntries.length, updEntries.length); i++) {
+                const e1 = origEntries[i];
+                const e2 = updEntries[i];
+                if ((e1.content || '') !== (e2.content || '') && (e2.content !== '번역 대기 중...')) {
+                    isLoreTrans = true; break;
+                }
+                if (JSON.stringify(extractKeysArray(e1)) !== JSON.stringify(extractKeysArray(e2))) {
+                    isLoreTrans = true; break;
+                }
+            }
+        }
+
         const rows = [
             {
                 name: '포맷 및 규격 (spec)',
@@ -1984,6 +2686,13 @@ ${chunkText}`;
                 upd: updatedData.extensions ? `${Object.keys(updatedData.extensions).length}개 모듈 데이터` : '(없음)',
                 type: 'preserved',
                 badge: '100% 바이너리 무손실'
+            },
+            {
+                name: '로어북 / 월드 인포 (character_book)',
+                orig: origEntries.length > 0 ? `${origEntries.length}개 항목 (키워드/본문)` : '(없음)',
+                upd: updEntries.length > 0 ? `${updEntries.length}개 항목` : '(없음)',
+                type: isLoreTrans ? 'translated' : 'preserved',
+                badge: isLoreTrans ? '번역 반영 (항목/키워드 무손실)' : (origEntries.length > 0 ? '100% 원본 보존' : '해당 없음')
             }
         ];
 
