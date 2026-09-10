@@ -1367,7 +1367,7 @@ ${chunkText}`;
         };
         if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
 
-        const timeoutSec = 45;
+        const timeoutSec = 90;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeoutSec * 1000);
 
@@ -1438,50 +1438,14 @@ ${chunkText}`;
 
     async function translateTextSmart(text, isProse = false, onProgress = null) {
         if (!text || text.trim() === '') return '';
-        // 최신 LLM(DeepSeek, Gemini, GPT-4o 등)은 4,000자 이상도 한 번에 완벽 처리 가능
-        if (isProse || text.length < 4000) {
-            return await requestChunkTranslation(text, isProse, 0, (sec) => {
-                if (typeof sec === 'string') {
-                    if (onProgress) onProgress(sec);
-                } else {
-                    const hint = sec > 12 ? ' (AI 응답 생성 중...)' : '';
-                    if (onProgress) onProgress(`⏳ 자연스러운 문체로 번역 중... (${sec}초 경과)${hint}`);
-                }
-            });
-        }
-
-        const lines = text.split('\n');
-        const chunks = [];
-        let cur = '';
-        for (const line of lines) {
-            if ((cur + '\n' + line).length > 3500) {
-                if (cur) chunks.push(cur);
-                cur = line;
+        return await requestChunkTranslation(text, isProse, 0, (sec) => {
+            if (typeof sec === 'string') {
+                if (onProgress) onProgress(sec);
             } else {
-                cur = cur ? (cur + '\n' + line) : line;
+                const hint = sec > 12 ? ' (AI 응답 생성 중...)' : '';
+                if (onProgress) onProgress(`⏳ 자연스러운 문체로 번역 중... (${sec}초 경과)${hint}`);
             }
-        }
-        if (cur) chunks.push(cur);
-
-        const results = [];
-        for (let idx = 0; idx < chunks.length; idx++) {
-            const ch = chunks[idx];
-            if (ch.trim() !== '') {
-                const tr = await requestChunkTranslation(ch, false, 0, (sec) => {
-                    if (typeof sec === 'string') {
-                        if (onProgress) onProgress(sec);
-                    } else {
-                        const hint = sec > 12 ? ' (AI 응답 생성 중...)' : '';
-                        if (onProgress) onProgress(`⏳ [${idx + 1}/${chunks.length} 조각] 번역 중... (${sec}초 경과)${hint}`);
-                    }
-                });
-                results.push(tr);
-                await sleep(400);
-            } else {
-                results.push('');
-            }
-        }
-        return results.join('\n');
+        });
     }
 
     // Drag & Drop / File Handling
@@ -1808,6 +1772,14 @@ ${chunkText}`;
             if (!target.system_prompt.includes(injectRule)) {
                 target.system_prompt = (target.system_prompt ? target.system_prompt + "\n\n" : "") + injectRule;
             }
+        }
+
+        if (clone.data) {
+            if (clone.description !== undefined) clone.description = target.description;
+            if (clone.personality !== undefined) clone.personality = target.personality;
+            if (clone.scenario !== undefined) clone.scenario = target.scenario;
+            if (clone.first_mes !== undefined) clone.first_mes = target.first_mes;
+            if (clone.mes_example !== undefined) clone.mes_example = target.mes_example;
         }
 
         return clone;
