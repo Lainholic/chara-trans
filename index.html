@@ -1183,7 +1183,7 @@
         gemini: {
             endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai',
             placeholder: 'AIzaSy... (Google AI Studio Key)',
-            defaultModel: 'gemini-3.1-flash-lite'
+            defaultModel: 'gemini-3.5-flash-lite'
         },
         ollama: {
             endpoint: 'http://localhost:11434/v1',
@@ -1194,7 +1194,9 @@
 
     const GEMINI_MODELS = [
         // ⚡ Flash-Lite (초경량 / 극가성비 / 최고 속도 번역)
-        { id: 'gemini-3.1-flash-lite', name: '⚡ gemini-3.1-flash-lite (공식 현행 플래시 라이트 추천 ⚡)', group: '⚡ Flash-Lite (초경량 / 극가성비)' },
+        { id: 'gemini-3.5-flash-lite', name: '⚡ gemini-3.5-flash-lite (3.5 플래시 라이트 ⚡)', group: '⚡ Flash-Lite (초경량 / 극가성비)' },
+        { id: 'gemini-3.1-flash-lite', name: '⚡ gemini-3.1-flash-lite (3.1 플래시 라이트)', group: '⚡ Flash-Lite (초경량 / 극가성비)' },
+        { id: 'gemini-3.8-flash-lite', name: '⚡ gemini-3.8-flash-lite (3.8 플래시 라이트)', group: '⚡ Flash-Lite (초경량 / 극가성비)' },
 
         // 🚀 Flash (고속 표준 번역)
         { id: 'gemini-3.8-flash', name: '🚀 gemini-3.8-flash (최신 시즌 초고속 플래시 🚀)', group: '🚀 Flash (고속 표준 번역)' },
